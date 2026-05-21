@@ -584,6 +584,12 @@ class LicenciaFuncionamientoCreateSerializer(serializers.Serializer):
                                )
     se_puede_publicar             = serializers.BooleanField(default=False)
     imprime_ordenanza_horario     = serializers.BooleanField(default=False)
+    tipo_establecimiento          = serializers.CharField(
+                                        max_length=50,
+                                        required=False,
+                                        allow_blank=True,
+                                        allow_null=True,
+                                    )
     giros                         = _GiroItemSerializer(many=True)
 
     def validate(self, data):
@@ -650,6 +656,12 @@ class LicenciaFuncionamientoUpdateSerializer(serializers.Serializer):
                                )
     se_puede_publicar             = serializers.BooleanField(default=False)
     imprime_ordenanza_horario     = serializers.BooleanField(default=False)
+    tipo_establecimiento          = serializers.CharField(
+                                        max_length=50,
+                                        required=False,
+                                        allow_blank=True,
+                                        allow_null=True,
+                                    )
     giros                         = _GiroItemSerializer(many=True)
 
     def validate(self, data):
