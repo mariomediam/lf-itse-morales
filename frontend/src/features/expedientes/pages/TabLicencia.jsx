@@ -113,10 +113,25 @@ function CardDatosPrincipales({ licencia }) {
         <Campo etiqueta="Resolución"       valor={licencia.resolucion_numero} />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
         <Campo etiqueta="Nivel de riesgo"   valor={licencia.nivel_riesgo_nombre} />
         <Campo etiqueta="Horario"           valor={formatHorario(licencia.hora_desde, licencia.hora_hasta)} />
         <Campo etiqueta="Número de recibo"  valor={licencia.numero_recibo_pago} />
+        <div>
+          <p className="text-xs text-gray-500 mb-0.5">Imprime ordenanza horario</p>
+          <span className={[
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
+            licencia.imprime_ordenanza_horario
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-500',
+          ].join(' ')}>
+            <span className={[
+              'w-1.5 h-1.5 rounded-full shrink-0',
+              licencia.imprime_ordenanza_horario ? 'bg-green-500' : 'bg-gray-400',
+            ].join(' ')} />
+            {licencia.imprime_ordenanza_horario ? 'Sí' : 'No'}
+          </span>
+        </div>
       </div>
 
       {(licencia.observaciones || licencia.fecha_notificacion) && (

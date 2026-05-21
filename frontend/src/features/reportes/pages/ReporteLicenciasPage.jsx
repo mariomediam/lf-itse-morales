@@ -162,6 +162,12 @@ function LicenciaCard({ lic }) {
           {lic.fecha_notificacion && (
             <Campo label="Notificación" value={formatFecha(lic.fecha_notificacion)} />
           )}
+          <div className="flex gap-1 text-xs mt-0.5">
+            <span className="text-gray-500 shrink-0">Ord. horario:</span>
+            <span className={lic.imprime_ordenanza_horario ? 'text-green-700 font-medium' : 'text-gray-400'}>
+              {lic.imprime_ordenanza_horario ? 'Sí' : 'No'}
+            </span>
+          </div>
         </div>
 
       </div>
@@ -440,6 +446,7 @@ export default function ReporteLicenciasPage() {
                                       ? `${formatFecha(lic.fecha_inicio_vigencia)} - ${formatFecha(lic.fecha_fin_vigencia)}`
                                       : '',
       'Estado':                   lic.esta_activo ? 'Activa' : 'Inactiva',
+      'Imprime Ord. Horario':     lic.imprime_ordenanza_horario ? 'Sí' : 'No',
     }))
 
     const ws = XLSX.utils.json_to_sheet(datos)

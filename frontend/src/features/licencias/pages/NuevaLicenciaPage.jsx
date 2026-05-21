@@ -131,6 +131,9 @@ export default function NuevaLicenciaPage() {
   const [giros,            setGiros]            = useState([])
   const [modalGiroAbierto, setModalGiroAbierto] = useState(false)
 
+  // Imprime ordenanza horario
+  const [imprimeOrdenanzaHorario, setImprimeOrdenanzaHorario] = useState(false)
+
   // Observaciones
   const [observaciones, setObservaciones] = useState('')
 
@@ -275,9 +278,10 @@ export default function NuevaLicenciaPage() {
       zonificacion_id:         Number(zonificacionId),
       area:                    area,
       numero_recibo_pago:      numeroReciboPago.trim(),
-      observaciones:           observaciones.trim() || null,
-      se_puede_publicar:       false,
-      giros:                   giros.map((g) => ({ giro_id: g.id })),
+      observaciones:              observaciones.trim() || null,
+      se_puede_publicar:          false,
+      imprime_ordenanza_horario:  imprimeOrdenanzaHorario,
+      giros:                      giros.map((g) => ({ giro_id: g.id })),
     }
 
     setSubmitting(true)
@@ -508,8 +512,8 @@ export default function NuevaLicenciaPage() {
                   </div>
                 </div>
 
-                {/* Fila 4: Recibo */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Fila 4: Recibo + Imprime ordenanza */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">
                       N° de recibo de pago
@@ -521,6 +525,35 @@ export default function NuevaLicenciaPage() {
                       placeholder="Ej. 00567587 (opcional)"
                       className={inputClass}
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Imprime ordenanza horario
+                    </label>
+                    <div className="flex items-center gap-3 h-[38px]">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={imprimeOrdenanzaHorario}
+                        onClick={() => setImprimeOrdenanzaHorario((v) => !v)}
+                        className={[
+                          'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent',
+                          'transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30',
+                          imprimeOrdenanzaHorario ? 'bg-primary' : 'bg-gray-300',
+                        ].join(' ')}
+                      >
+                        <span
+                          className={[
+                            'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow',
+                            'transform transition duration-200',
+                            imprimeOrdenanzaHorario ? 'translate-x-5' : 'translate-x-0',
+                          ].join(' ')}
+                        />
+                      </button>
+                      <span className="text-sm font-medium text-gray-700">
+                        {imprimeOrdenanzaHorario ? 'Sí' : 'No'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
