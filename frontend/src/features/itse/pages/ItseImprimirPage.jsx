@@ -160,25 +160,25 @@ const ItseImprimirPage = () => {
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          overflow: 'hidden',
         }}>
 
           {/* ── MARCA DE AGUA ESCUDO ── */}
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 0,
-            pointerEvents: 'none',
-          }}>
-            <img
-              src="/images/escudo-muni.png"
-              alt=""
-              style={{ width: '300mm', height: 'auto', opacity: 0.15 }}
-              onError={(e) => { e.target.style.display = 'none' }}
-            />
-          </div>
+          <img
+            src="/images/escudo-muni.png"
+            alt=""
+            style={{
+              position: 'absolute',
+              top: '55%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '160mm',
+              height: 'auto',
+              opacity: 0.12,
+              zIndex: 0,
+              pointerEvents: 'none',
+            }}
+            onError={(e) => { e.target.style.display = 'none' }}
+          />
 
           {/* ── TRIÁNGULO CELESTE (esquina inferior izquierda) ── */}
           <div style={{
