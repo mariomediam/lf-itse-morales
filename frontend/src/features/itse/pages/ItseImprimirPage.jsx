@@ -180,18 +180,24 @@ const ItseImprimirPage = () => {
             onError={(e) => { e.target.style.display = 'none' }}
           />
 
-          {/* ── TRIÁNGULO CELESTE (esquina inferior izquierda) ── */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: 0,
-            height: 0,
-            borderStyle: 'solid',
-            borderWidth: '0 0 50mm 50mm',
-            borderColor: 'transparent transparent #5bb8d4 transparent',
-            zIndex: 0,
-          }} />
+          {/* ── TRIÁNGULO CELESTE ── */}
+          <svg
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: '100%',
+              height: '5%',
+              zIndex: 0,
+              display: 'block',
+              padding: '0 15mm 15px 15mm',
+            }}
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <polygon points="0,0 0,100 100,100" fill="#D6EEFB" />
+          </svg>
 
           {/* Contenido sobre la marca de agua */}
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -331,20 +337,20 @@ const ItseImprimirPage = () => {
             <div style={{ flex: 1 }} />
 
             {/* ── NOTA LEGAL ── */}
-            <div style={{ marginTop: '12px' }}>
+            <div style={{ marginTop: '12px', marginBottom: '20px' }}>
               <p style={{ fontSize: '9px', textAlign: 'justify', margin: '0 0 4px 0', lineHeight: '1.4', fontWeight: 'bold' }}>
                 &quot;*El presente Certificado de ITSE no constituye autorización alguna para el funcionamiento
                 del Establecimiento Objeto de Inspección o para el inicio de la actividad&quot;.
               </p>
-              <p style={{ fontWeight: 'bold', fontSize: '8.5px', margin: '0 0 2px 0' }}>NOTA:</p>
+              <p style={{ fontWeight: 'bold', fontSize: '8.5px', margin: '0 0 1px 0', lineHeight: '1.1' }}>NOTA:</p>
               {[
                 'DE ACUERDO A LO ESTABLECIDO EN EL REGLAMENTO DE INSPECCIONES TÉCNICAS DE SEGURIDAD EN EDIFICACIONES APROBADO POR DECRETO SUPREMO N° 002-2018 PCM, EL PRESENTE CERTIFICADO DEBERÁ SER FIRMADO POR EL RESPONSABLE DEL ÓRGANO EJECUTANTE.',
                 'ESTE CERTIFICADO DEBERÁ COLOCARSE EN UN LUGAR VISIBLE DENTRO DEL ESTABLECIMIENTO OBJETO DE INSPECCIÓN.',
                 'CUALQUIER TACHA O ENMENDADURA INVALIDA EL PRESENTE CERTIFICADO.',
               ].map((texto, i) => (
-                <div key={i} style={{ display: 'flex', gap: '4px', marginBottom: '2px' }}>
+                <div key={i} style={{ display: 'flex', gap: '4px', marginBottom: '0px' }}>
                   <span style={{ fontSize: '8.5px', flexShrink: 0 }}>-</span>
-                  <p style={{ margin: 0, fontSize: '8.5px', lineHeight: '1.4' }}>{texto}</p>
+                  <p style={{ margin: 0, fontSize: '8.5px', lineHeight: '1.2' }}>{texto}</p>
                 </div>
               ))}
             </div>
