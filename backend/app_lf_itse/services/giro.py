@@ -5,7 +5,8 @@ Centraliza la lógica del dominio separándola de la capa HTTP (views/serializer
 lo que facilita reutilización, pruebas unitarias y futuros cambios.
 """
 
-from django.db import connection
+from auditlog.context import set_actor
+from django.db import connection, transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -79,14 +80,15 @@ def crear_giro(data: dict, usuario) -> Giro:
     Giro
         Instancia recién creada.
     """
-    return Giro.objects.create(
-        **data,
-        usuario=usuario,
-        fecha_digitacion=timezone.now(),
-    )
+    with set_actor(usuario), transaction.atomic():
+        return Giro.objects.create(
+            **data,
+            usuario=usuario,
+            fecha_digitacion=timezone.now(),
+        )
 
 
-def actualizar_giro(pk: int, data: dict) -> Giro:
+def actualizar_giro(pk: int, data: dict, usuario) -> Giro:
     """
     Actualiza los campos de un Giro.
 
@@ -101,20 +103,22 @@ def actualizar_giro(pk: int, data: dict) -> Giro:
         Instancia actualizada.
     """
     giro = get_object_or_404(Giro, pk=pk)
-    for campo, valor in data.items():
-        setattr(giro, campo, valor)
-    giro.save()
+    with set_actor(usuario), transaction.atomic():
+        for campo, valor in data.items():
+            setattr(giro, campo, valor)
+        giro.save()
     return giro
 
 
-def eliminar_giro(pk: int) -> None:
+def eliminar_giro(pk: int, usuario) -> None:
     """
     Elimina físicamente el Giro indicado.
     Lanza HTTP 404 si no existe.
     Lanza ProtectedError si está referenciado por licencias o certificados ITSE.
     """
     giro = get_object_or_404(Giro, pk=pk)
-    giro.delete()
+    with set_actor(usuario), transaction.atomic():
+        giro.delete()
 
 
 _SQL_GIROS_POR_LICENCIA = """

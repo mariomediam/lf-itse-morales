@@ -5,7 +5,9 @@ Centraliza la lógica del dominio separándola de la capa HTTP (views/serializer
 lo que facilita reutilización, pruebas unitarias y futuros cambios.
 """
 
+from auditlog.context import set_actor
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -172,7 +174,20 @@ def construir_menu_usuario(usuario_id: int) -> list[dict]:
                 'id': 'reportes-certificados-itse',
                 'label': 'Certificados ITSE',
                 'url': '/reportes/certificados-itse',
-                'submenues': [],
+                'submenues': [
+                    {
+                        'id': 'reportes-certificados-itse-reporte',
+                        'label': 'Reporte',
+                        'url': '/reportes/certificados-itse',
+                        'submenues': [],
+                    },
+                    {
+                        'id': 'reportes-certificados-itse-por-renovar',
+                        'label': 'Por renovar',
+                        'url': '/reportes/certificados-itse/por-renovar',
+                        'submenues': [],
+                    },
+                ],
             },
         ],
     })
@@ -194,6 +209,12 @@ def construir_menu_usuario(usuario_id: int) -> list[dict]:
                     'id': 'catalogos-giros',
                     'label': 'Giros',
                     'url': '/catalogos/giros',
+                    'submenues': [],
+                },
+                {
+                    'id': 'catalogos-inspectores',
+                    'label': 'Inspectores',
+                    'url': '/catalogos/inspectores',
                     'submenues': [],
                 },
                 {
@@ -262,20 +283,21 @@ def crear_usuario(data: dict, digitador) -> object:
     perfil_data = data.pop('perfil')
     password    = data.pop('password')
 
-    user = User(**data)
-    user.set_password(password)
-    user.save()
+    with set_actor(digitador), transaction.atomic():
+        user = User(**data)
+        user.set_password(password)
+        user.save()
 
-    UsuarioPerfil.objects.create(
-        user=user,
-        user_digitador=digitador,
-        fecha_digitacion=timezone.now(),
-        **perfil_data,
-    )
+        UsuarioPerfil.objects.create(
+            user=user,
+            user_digitador=digitador,
+            fecha_digitacion=timezone.now(),
+            **perfil_data,
+        )
     return User.objects.select_related('perfil_lf_itse').get(pk=user.pk)
 
 
-def actualizar_usuario(pk: int, data: dict) -> object:
+def actualizar_usuario(pk: int, data: dict, usuario) -> object:
     """
     Actualiza un usuario y su perfil de permisos.
 
@@ -295,29 +317,30 @@ def actualizar_usuario(pk: int, data: dict) -> object:
     perfil_data = data.pop('perfil')
     password    = data.pop('password', None)
 
-    for campo, valor in data.items():
-        setattr(user, campo, valor)
-    if password:
-        user.set_password(password)
-    user.save()
+    with set_actor(usuario), transaction.atomic():
+        for campo, valor in data.items():
+            setattr(user, campo, valor)
+        if password:
+            user.set_password(password)
+        user.save()
 
-    try:
-        perfil = user.perfil_lf_itse
-        for campo, valor in perfil_data.items():
-            setattr(perfil, campo, valor)
-        perfil.save()
-    except UsuarioPerfil.DoesNotExist:
-        UsuarioPerfil.objects.create(
-            user=user,
-            user_digitador=user,
-            fecha_digitacion=timezone.now(),
-            **perfil_data,
-        )
+        try:
+            perfil = user.perfil_lf_itse
+            for campo, valor in perfil_data.items():
+                setattr(perfil, campo, valor)
+            perfil.save()
+        except UsuarioPerfil.DoesNotExist:
+            UsuarioPerfil.objects.create(
+                user=user,
+                user_digitador=usuario,
+                fecha_digitacion=timezone.now(),
+                **perfil_data,
+            )
 
     return User.objects.select_related('perfil_lf_itse').get(pk=user.pk)
 
 
-def eliminar_usuario(pk: int) -> None:
+def eliminar_usuario(pk: int, usuario) -> None:
     """
     Elimina un usuario y su perfil de permisos.
 
@@ -363,7 +386,8 @@ def eliminar_usuario(pk: int) -> None:
                 f'El usuario tiene {nombre} registrados y no puede ser eliminado.'
             )
 
-    user.delete()
+    with set_actor(usuario), transaction.atomic():
+        user.delete()
 
 
 def cambiar_password(pk: int, nueva_password: str) -> None:

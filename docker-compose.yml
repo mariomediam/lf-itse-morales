@@ -26,7 +26,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://192.168.4.227:8000
+      # - VITE_API_URL=http://192.168.4.227:8000
+      - VITE_API_URL=http://localhost:8000
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend

@@ -16,6 +16,15 @@ export const itseApi = {
   getGiros: (itseId) =>
     api.get(`/api/lf-itse/itse/${itseId}/giros/`),
 
+  getInspectores: (itseId) =>
+    api.get(`/api/lf-itse/itse/${itseId}/inspectores/`),
+
+  crearInspector: (itseId, inspectorId) =>
+    api.post(`/api/lf-itse/itse/${itseId}/inspectores/`, { inspector_id: inspectorId }),
+
+  eliminarInspectores: (itseId) =>
+    api.delete(`/api/lf-itse/itse/${itseId}/inspectores/`),
+
   verificarExpediente: (numero_expediente, anio) =>
     api.get('/api/lf-itse/itse/verificar-expediente/', {
       params: { numero_expediente, anio },
@@ -57,4 +66,9 @@ export const itseApi = {
 
   consultar: (params) =>
     api.get('/api/lf-itse/itse/consulta/', { params }),
+
+  porRenovar: (fechaDesde, fechaHasta) =>
+    api.get('/api/lf-itse/itse/por-renovar/', {
+      params: { fecha_desde: fechaDesde, fecha_hasta: fechaHasta },
+    }),
 }

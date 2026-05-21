@@ -25,6 +25,7 @@ function SeccionTitulo({ children }) {
 const estadoInicial = {
   codigo:                  '',
   nombre:                  '',
+  monto:                   '0.00',
   plazo_atencion_dias:     0,
   dias_alerta_vencimiento: 0,
   esta_activo:             true,
@@ -80,6 +81,7 @@ export default function TipoProcedimientoTupaFormModal({
       setFormData({
         codigo:                  tipo.codigo                  ?? '',
         nombre:                  tipo.nombre                  ?? '',
+        monto:                   tipo.monto                   != null ? String(tipo.monto) : '0.00',
         plazo_atencion_dias:     tipo.plazo_atencion_dias     ?? 0,
         dias_alerta_vencimiento: tipo.dias_alerta_vencimiento ?? 0,
         esta_activo:             tipo.esta_activo             ?? true,
@@ -122,9 +124,16 @@ export default function TipoProcedimientoTupaFormModal({
       return
     }
 
+    const montoNum = parseFloat(formData.monto)
+    if (isNaN(montoNum) || montoNum < 0) {
+      toast.error('El monto debe ser un valor numérico mayor o igual a 0')
+      return
+    }
+
     const body = {
       codigo:                  formData.codigo.trim(),
       nombre:                  formData.nombre.trim(),
+      monto:                   montoNum.toFixed(2),
       plazo_atencion_dias:     Number(formData.plazo_atencion_dias) || 0,
       dias_alerta_vencimiento: Number(formData.dias_alerta_vencimiento) || 0,
       esta_activo:             formData.esta_activo,
@@ -182,39 +191,37 @@ export default function TipoProcedimientoTupaFormModal({
         <div>
           <SeccionTitulo>Identificación</SeccionTitulo>
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>
-                  Código <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="codigo"
-                  value={formData.codigo}
-                  onChange={handleChange}
-                  placeholder="Ej: PT-001"
-                  className={inputClass}
-                  maxLength={50}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>
-                  Unidad orgánica <span className="text-danger">*</span>
-                </label>
-                <select
-                  name="unidad_organica"
-                  value={formData.unidad_organica}
-                  onChange={handleChange}
-                  className={inputClass}
-                >
-                  <option value="">— Seleccionar —</option>
-                  {unidadesOrganicas.map((u) => (
-                    <option key={u.id} value={String(u.id)}>
-                      {u.sigla ? `${u.sigla} - ${u.nombre}` : u.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label className={labelClass}>
+                Código <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                name="codigo"
+                value={formData.codigo}
+                onChange={handleChange}
+                placeholder="Ej: PT-001"
+                className={inputClass}
+                maxLength={50}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>
+                Unidad orgánica <span className="text-danger">*</span>
+              </label>
+              <select
+                name="unidad_organica"
+                value={formData.unidad_organica}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="">— Seleccionar —</option>
+                {unidadesOrganicas.map((u) => (
+                  <option key={u.id} value={String(u.id)}>
+                    {u.sigla ? `${u.sigla} - ${u.nombre}` : u.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>
@@ -236,7 +243,7 @@ export default function TipoProcedimientoTupaFormModal({
         {/* Plazos */}
         <div>
           <SeccionTitulo>Plazos</SeccionTitulo>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 items-end">
             <div>
               <label className={labelClass}>Plazo de atención (días hábiles)</label>
               <input
@@ -256,6 +263,25 @@ export default function TipoProcedimientoTupaFormModal({
                 value={formData.dias_alerta_vencimiento}
                 onChange={handleChange}
                 min={0}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Monto */}
+        <div>
+          <SeccionTitulo>Pago por derecho de tramitación </SeccionTitulo>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Monto (S/)</label>
+              <input
+                type="number"
+                name="monto"
+                value={formData.monto}
+                onChange={handleChange}
+                min={0}
+                step="0.01"
                 className={inputClass}
               />
             </div>

@@ -5,6 +5,7 @@ Centraliza la lógica del dominio separándola de la capa HTTP (views/serializer
 lo que facilita reutilización, pruebas unitarias y futuros cambios.
 """
 
+from auditlog.context import set_actor
 from django.db import connection, transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -132,7 +133,7 @@ def crear_persona(data: dict, usuario) -> Persona:
 
     now = timezone.now()
 
-    with transaction.atomic():
+    with set_actor(usuario), transaction.atomic():
         persona = Persona.objects.create(
             **data,
             user=usuario,
@@ -144,7 +145,7 @@ def crear_persona(data: dict, usuario) -> Persona:
     return obtener_persona(persona.pk)
 
 
-def actualizar_persona(pk: int, data: dict) -> Persona:
+def actualizar_persona(pk: int, data: dict, usuario) -> Persona:
     """
     Actualiza los datos de una Persona y reemplaza todos sus documentos,
     dentro de una transacción.
@@ -179,14 +180,14 @@ def actualizar_persona(pk: int, data: dict) -> Persona:
         setattr(persona, campo, valor)
     persona.fecha_actualizacion = timezone.now()
 
-    with transaction.atomic():
+    with set_actor(usuario), transaction.atomic():
         persona.save()
         _guardar_documentos(persona, documentos_data)
 
     return obtener_persona(persona.pk)
 
 
-def eliminar_persona(pk: int) -> None:
+def eliminar_persona(pk: int, usuario) -> None:
     """
     Elimina físicamente la Persona indicada y sus documentos (CASCADE).
     Lanza HTTP 404 si no existe.
@@ -195,9 +196,12 @@ def eliminar_persona(pk: int) -> None:
     ----------
     pk : int
         Clave primaria de la persona a eliminar.
+    usuario : AUTH_USER_MODEL instance
+        Usuario autenticado; se usa para registrar la auditoría.
     """
     persona = get_object_or_404(Persona, pk=pk)
-    persona.delete()
+    with set_actor(usuario), transaction.atomic():
+        persona.delete()
 
 
 # Bloque NOMBRE: filtra personas cuyo nombre completo coincida parcialmente.
@@ -205,9 +209,9 @@ _SQL_FILTRO_NOMBRE = """
     SELECT p.id AS persona_id
     FROM personas p
     WHERE TRIM(
-        COALESCE(p.apellido_paterno, '') || ' ' ||
-        COALESCE(p.apellido_materno, '') || ' ' ||
-        COALESCE(p.nombres, '')
+        CONCAT(COALESCE(p.apellido_paterno, ''), ' ',
+        COALESCE(p.apellido_materno, ''), ' ',
+        COALESCE(p.nombres, ''))
     ) ILIKE %s
 """
 
@@ -220,7 +224,7 @@ _SQL_FILTRO_DOCUMENTO = """
 
 # Bloque ID: filtra por clave primaria de la persona.
 _SQL_FILTRO_ID = """
-    SELECT %s::INTEGER AS persona_id
+    SELECT %s::bigint AS persona_id
 """
 
 # Consulta principal: recibe el bloque de filtro como subquery y
@@ -251,9 +255,9 @@ SELECT
     p.apellido_materno,
     p.nombres,
     TRIM(
-        COALESCE(p.apellido_paterno, '') || ' ' ||
-        COALESCE(p.apellido_materno, '') || ' ' ||
-        COALESCE(p.nombres, '')
+        CONCAT(COALESCE(p.apellido_paterno, ''), ' ',
+        COALESCE(p.apellido_materno, ''), ' ',
+        COALESCE(p.nombres, ''))
     )                       AS persona_nombre,
     p.direccion,
     p.distrito,
@@ -268,9 +272,9 @@ SELECT
 FROM documentos_concatenados dc
 INNER JOIN personas p ON dc.persona_id = p.id
 ORDER BY TRIM(
-    COALESCE(p.apellido_paterno, '') || ' ' ||
-    COALESCE(p.apellido_materno, '') || ' ' ||
-    COALESCE(p.nombres, '')
+    CONCAT(COALESCE(p.apellido_paterno, ''), ' ',
+    COALESCE(p.apellido_materno, ''), ' ',
+    COALESCE(p.nombres, ''))
 )
 """
 
@@ -370,5 +374,5 @@ def buscar_personas(filtro: str, valor: str) -> list[dict]:
 
     with connection.cursor() as cursor:
         cursor.execute(sql, [valor_param])
-        columnas = [col.name for col in cursor.description]
+        columnas = [col[0] for col in cursor.description]
         return [dict(zip(columnas, fila)) for fila in cursor.fetchall()]

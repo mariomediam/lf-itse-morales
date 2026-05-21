@@ -54,7 +54,81 @@ const DefaultIcon = () => (
   </svg>
 )
 
-// ── Fila de menú (con soporte para submenús) ──────────────────────────────────
+// ── Fila de submenú de nivel 2 (con soporte para nivel 3) ────────────────────
+function SubMenuItemRow({ sub }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const hasChildren = sub.submenues?.length > 0
+
+  const isChildActive = hasChildren
+    ? sub.submenues.some((c) => location.pathname.startsWith(c.url))
+    : false
+
+  const [expanded, setExpanded] = useState(isChildActive)
+
+  const isActive = !hasChildren && location.pathname === sub.url
+
+  const handleClick = () => {
+    if (hasChildren) {
+      setExpanded((v) => !v)
+    } else {
+      navigate(sub.url)
+    }
+  }
+
+  return (
+    <li>
+      <button
+        onClick={handleClick}
+        className={[
+          'w-[calc(100%-0.5rem)] flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors',
+          isActive || isChildActive
+            ? 'text-primary font-medium bg-primary/5'
+            : 'text-gray-600 hover:text-primary hover:bg-gray-50',
+        ].join(' ')}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+        <span className="flex-1 text-left leading-tight">{sub.label}</span>
+        {hasChildren && (
+          <svg
+            className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
+      </button>
+
+      {/* Nivel 3 */}
+      {hasChildren && expanded && (
+        <ul className="mt-0.5 ml-4 space-y-0.5">
+          {sub.submenues.map((child) => {
+            const isChildItemActive = location.pathname === child.url
+            return (
+              <li key={child.id}>
+                <button
+                  onClick={() => navigate(child.url)}
+                  className={[
+                    'w-[calc(100%-0.5rem)] flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg transition-colors',
+                    isChildItemActive
+                      ? 'text-primary font-medium bg-primary/5'
+                      : 'text-gray-500 hover:text-primary hover:bg-gray-50',
+                  ].join(' ')}
+                >
+                  <span className="w-1 h-1 rounded-full bg-current shrink-0" />
+                  {child.label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </li>
+  )
+}
+
+// ── Fila de menú nivel 1 ──────────────────────────────────────────────────────
 function MenuItemRow({ item }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -62,7 +136,10 @@ function MenuItemRow({ item }) {
   const hasSubmenu = item.submenues?.length > 0
 
   const isSubActive = hasSubmenu
-    ? item.submenues.some((s) => location.pathname.startsWith(s.url))
+    ? item.submenues.some((s) =>
+        location.pathname.startsWith(s.url) ||
+        s.submenues?.some((c) => location.pathname.startsWith(c.url))
+      )
     : false
 
   const [expanded, setExpanded] = useState(isSubActive)
@@ -102,25 +179,9 @@ function MenuItemRow({ item }) {
 
       {hasSubmenu && expanded && (
         <ul className="mt-0.5 ml-4 space-y-0.5">
-          {item.submenues.map((sub) => {
-            const isSubItemActive = location.pathname === sub.url
-            return (
-              <li key={sub.id}>
-                <button
-                  onClick={() => navigate(sub.url)}
-                  className={[
-                    'w-[calc(100%-0.5rem)] flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors',
-                    isSubItemActive
-                      ? 'text-primary font-medium bg-primary/5'
-                      : 'text-gray-600 hover:text-primary hover:bg-gray-50',
-                  ].join(' ')}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
-                  {sub.label}
-                </button>
-              </li>
-            )
-          })}
+          {item.submenues.map((sub) => (
+            <SubMenuItemRow key={sub.id} sub={sub} />
+          ))}
         </ul>
       )}
     </li>

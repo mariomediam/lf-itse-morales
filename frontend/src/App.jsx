@@ -20,8 +20,10 @@ import ItseImprimirPage from '@features/itse/pages/ItseImprimirPage'
 import ReporteLicenciasPage from '@features/reportes/pages/ReporteLicenciasPage'
 import ReporteItsePage from '@features/reportes/pages/ReporteItsePage'
 import ReporteExpedientesPage from '@features/reportes/pages/ReporteExpedientesPage'
+import ReporteItsePorRenovarPage from '@features/reportes/pages/ReporteItsePorRenovarPage'
 import PersonasPage from '@features/personas/pages/PersonasPage'
 import GirosPage from '@features/giros/pages/GirosPage'
+import InspectoresPage from '@features/inspectores/pages/InspectoresPage'
 import ZonificacionesPage from '@features/zonificaciones/pages/ZonificacionesPage'
 import TiposProcedimientoTupaPage from '@features/tipos-procedimiento-tupa/pages/TiposProcedimientoTupaPage'
 import UsuariosPage from '@features/usuarios/pages/UsuariosPage'
@@ -231,6 +233,14 @@ function App() {
           }
         />
         <Route
+          path="/reportes/certificados-itse/por-renovar"
+          element={
+            <ProtectedRoute>
+              <ReporteItsePorRenovarPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/catalogos/personas"
           element={
             <ProtectedRoute>
@@ -243,6 +253,14 @@ function App() {
           element={
             <ProtectedRoute>
               <GirosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogos/inspectores"
+          element={
+            <ProtectedRoute>
+              <InspectoresPage />
             </ProtectedRoute>
           }
         />

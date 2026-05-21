@@ -347,7 +347,7 @@ export default function TabLicencia({ expediente }) {
         // padre, porque si la licencia fue denegada no habrá registro en la tabla
         // licencias_funcionamiento.
         const [licRes, autRes] = await Promise.all([
-          licenciasApi.buscar('EXPEDIENTE', expediente.numero_expediente),
+          licenciasApi.buscar('EXPEDIENTE_ID', expediente.id),
           expedientesApi.getAutorizacionImprocedente(expediente.id, 'LF'),
         ])
 

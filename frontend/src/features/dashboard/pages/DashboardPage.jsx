@@ -5,23 +5,39 @@ import SideMenu from '@components/layout/SideMenu'
 import DashboardHeader from '../components/DashboardHeader'
 import ResumenCard from '../components/ResumenCard'
 import ExpedienteItem from '../components/ExpedienteItem'
+import ItsePorRenovarItem from '../components/ItsePorRenovarItem'
 import { dashboardApi } from '@api/dashboardApi'
+import { itseApi } from '@api/itseApi'
+
+// Suma un mes a una fecha ISO (YYYY-MM-DD)
+const sumarUnMes = (fechaIso) => {
+  const d = new Date(fechaIso + 'T00:00:00')
+  d.setMonth(d.getMonth() + 1)
+  return d.toISOString().slice(0, 10)
+}
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [menus, setMenus] = useState([])
+  const [menus,       setMenus]       = useState([])
   const [expedientes, setExpedientes] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [itseRenovar, setItseRenovar] = useState([])
+  const [loading,     setLoading]     = useState(true)
 
   const cargarDatos = useCallback(async () => {
     setLoading(true)
     try {
-      const [menusRes, expedientesRes] = await Promise.all([
+      const fechaRes = await dashboardApi.getFechaServidor()
+      const hoy      = fechaRes.data.fecha
+      const hasta    = sumarUnMes(hoy)
+
+      const [menusRes, expedientesRes, porRenovarRes] = await Promise.all([
         dashboardApi.getMenusUsuario(),
         dashboardApi.getExpedientesPendientes(),
+        itseApi.porRenovar(hoy, hasta),
       ])
       setMenus(menusRes.data)
       setExpedientes(expedientesRes.data)
+      setItseRenovar(porRenovarRes.data)
     } catch {
       toast.error('Error al cargar los datos del dashboard')
     } finally {
@@ -111,7 +127,7 @@ export default function DashboardPage() {
               )}
 
               {/* ── Bandeja de expedientes pendientes ───────────────────── */}
-              <section>
+              <section className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
                   <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -129,6 +145,36 @@ export default function DashboardPage() {
                 ) : (
                   <p className="text-sm text-gray-500 py-6 text-center">
                     No hay expedientes pendientes en la bandeja
+                  </p>
+                )}
+              </section>
+
+              {/* ── ITSE por renovar en el próximo mes ──────────────────── */}
+              <section>
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <h2 className="text-base font-semibold text-gray-700">
+                    ITSE por renovar en los próximos 30 días
+                  </h2>
+                  {itseRenovar.length > 0 && (
+                    <span className="ml-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+                      {itseRenovar.length}
+                    </span>
+                  )}
+                </div>
+
+                {itseRenovar.length > 0 ? (
+                  <div className="space-y-3">
+                    {itseRenovar.map((itse) => (
+                      <ItsePorRenovarItem key={itse.id} itse={itse} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 py-6 text-center bg-white rounded-lg border border-gray-200">
+                    No hay ITSE que deban renovarse en los próximos 30 días
                   </p>
                 )}
               </section>

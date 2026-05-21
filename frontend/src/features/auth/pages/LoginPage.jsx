@@ -13,7 +13,7 @@ const LoginPage = () => {
             className="h-20 w-auto mb-3"
           />
           <p className="text-primary text-sm font-semibold text-center mb-6">
-            Municipalidad Distrital de Morales
+            Municipalidad Provincial de Rioja
           </p>
 
           <div className="w-full mb-8">

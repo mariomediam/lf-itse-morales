@@ -337,7 +337,7 @@ export default function TabItse({ expediente }) {
         // La autorizacion improcedente se consulta siempre con el id del expediente
         // padre, porque si la ITSE fue rechazada no habrá registro en la tabla itse.
         const [itseRes, autRes] = await Promise.all([
-          itseApi.buscar('EXPEDIENTE', expediente.numero_expediente),
+          itseApi.buscar('EXPEDIENTE_ID', expediente.id),
           expedientesApi.getAutorizacionImprocedente(expediente.id, 'ITSE'),
         ])
 

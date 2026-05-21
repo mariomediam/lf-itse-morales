@@ -6,4 +6,7 @@ export const dashboardApi = {
 
   getMenusUsuario: () =>
     api.get('/api/lf-itse/usuarios/menus/'),
+
+  getFechaServidor: () =>
+    api.get('/api/lf-itse/fecha-servidor/'),
 }

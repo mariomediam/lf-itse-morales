@@ -2,8 +2,10 @@
 Servicios de negocio para ITSE.
 """
 
+from auditlog.context import set_actor
 from django.core.files.storage import default_storage
 from django.db import connection, transaction
+from django.db.models import Max
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -52,15 +54,15 @@ SELECT
     e.numero_expediente,
     e.fecha_recepcion,
     TRIM(
-        COALESCE(ttitular.apellido_paterno, '') || ' ' ||
-        COALESCE(ttitular.apellido_materno, '') || ' ' ||
-        COALESCE(ttitular.nombres, '')
+        CONCAT(COALESCE(ttitular.apellido_paterno, ''), ' ',
+        COALESCE(ttitular.apellido_materno, ''), ' ',
+        COALESCE(ttitular.nombres, ''))
     ) AS titular_nombre,
     truc.numero_documento AS titular_ruc,
     TRIM(
-        COALESCE(tconductor.apellido_paterno, '') || ' ' ||
-        COALESCE(tconductor.apellido_materno, '') || ' ' ||
-        COALESCE(tconductor.nombres, '')
+        CONCAT(COALESCE(tconductor.apellido_paterno, ''), ' ',
+        COALESCE(tconductor.apellido_materno, ''), ' ',
+        COALESCE(tconductor.nombres, ''))
     ) AS conductor_nombre,
     CASE
         WHEN titse_inactivos.itse_id IS NULL THEN TRUE
@@ -122,6 +124,10 @@ _FILTROS_BUSQUEDA_ITSE: dict[str, tuple[str, callable]] = {
         'WHERE e.numero_expediente = %s',
         int,
     ),
+    'EXPEDIENTE_ID': (
+        'WHERE e.id = %s',
+        int,
+    ),
     'NOMBRE_COMERCIAL': (
         'WHERE i.nombre_comercial ILIKE %s',
         lambda v: '%' + v.replace(' ', '%') + '%',
@@ -131,9 +137,9 @@ _FILTROS_BUSQUEDA_ITSE: dict[str, tuple[str, callable]] = {
     'FECHA_EMISION': _WHERE_FECHA_EXPEDICION,
     'NOMBRES_TITULAR': (
         "WHERE TRIM("
-        "    COALESCE(ttitular.apellido_paterno, '') || ' ' ||"
-        "    COALESCE(ttitular.apellido_materno, '') || ' ' ||"
-        "    COALESCE(ttitular.nombres, '')"
+        "    CONCAT(COALESCE(ttitular.apellido_paterno, ''), ' ',"
+        "    COALESCE(ttitular.apellido_materno, ''), ' ',"
+        "    COALESCE(ttitular.nombres, ''))"
         ") ILIKE %s",
         lambda v: '%' + v.replace(' ', '%') + '%',
     ),
@@ -143,9 +149,9 @@ _FILTROS_BUSQUEDA_ITSE: dict[str, tuple[str, callable]] = {
     ),
     'NOMBRES_CONDUCTOR': (
         "WHERE TRIM("
-        "    COALESCE(tconductor.apellido_paterno, '') || ' ' ||"
-        "    COALESCE(tconductor.apellido_materno, '') || ' ' ||"
-        "    COALESCE(tconductor.nombres, '')"
+        "    CONCAT(COALESCE(tconductor.apellido_paterno, ''), ' ',"
+        "    COALESCE(tconductor.apellido_materno, ''), ' ',"
+        "    COALESCE(tconductor.nombres, ''))"
         ") ILIKE %s",
         lambda v: '%' + v.replace(' ', '%') + '%',
     ),
@@ -188,7 +194,58 @@ def buscar_itse(filtro: str, valor: str) -> list[dict]:
 
     with connection.cursor() as cursor:
         cursor.execute(sql, [valor_param])
-        columnas = [col.name for col in cursor.description]
+        columnas = [col[0] for col in cursor.description]
+        return [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+
+
+_SQL_ITSE_POR_RENOVAR = """
+SELECT
+    itse.id,
+    itse.numero_itse,
+    itse.fecha_expedicion,
+    itse.fecha_solicitud_renovacion,
+    itse.fecha_caducidad,
+    itse.nombre_comercial,
+    itse.direccion,
+    itse.expediente_id
+FROM itse
+LEFT JOIN (
+    SELECT itse_principal_id AS id
+    FROM itse
+    WHERE itse_principal_id IS NOT NULL
+) AS TItseRenovadas ON itse.id = TItseRenovadas.id
+LEFT JOIN (
+    SELECT DISTINCT ie.itse_id
+    FROM itse_estados ie
+    INNER JOIN estados est ON ie.estado_id = est.id
+    WHERE est.esta_activo = FALSE
+) AS titse_inactivos ON itse.id = titse_inactivos.itse_id
+WHERE TItseRenovadas.id IS NULL
+  AND titse_inactivos.itse_id IS NULL
+  AND itse.fecha_caducidad BETWEEN %s AND %s
+ORDER BY itse.fecha_caducidad
+"""
+
+
+def itse_por_renovar(fecha_desde: str, fecha_hasta: str) -> list[dict]:
+    """
+    Retorna las ITSE que deben ser renovadas dentro del periodo indicado.
+
+    Criterios de inclusión
+    ----------------------
+    - La ITSE no ha sido renovada aún (no existe otra ITSE que la referencie
+      como itse_principal_id).
+    - La ITSE está activa (no tiene ningún estado inactivo en su historial).
+    - La fecha de caducidad cae dentro del rango [fecha_desde, fecha_hasta].
+
+    Parámetros
+    ----------
+    fecha_desde : str  — fecha ISO (YYYY-MM-DD), extremo inferior del rango.
+    fecha_hasta : str  — fecha ISO (YYYY-MM-DD), extremo superior del rango.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(_SQL_ITSE_POR_RENOVAR, [fecha_desde, fecha_hasta])
+        columnas = [col[0] for col in cursor.description]
         return [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
 
 
@@ -235,7 +292,7 @@ def listar_estados_itse(itse_id: int) -> list[dict]:
     """
     with connection.cursor() as cursor:
         cursor.execute(_SQL_LISTAR_ESTADOS_ITSE, [itse_id])
-        columnas = [col.name for col in cursor.description]
+        columnas = [col[0] for col in cursor.description]
         return [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
 
 
@@ -328,6 +385,32 @@ def _validar_expediente_para_emision_itse(
         )
 
 
+def get_siguiente_numero_itse(anio: int) -> int:
+    """
+    Retorna el siguiente número de ITSE para el año dado.
+
+    Busca el mayor ``numero_itse`` registrado cuya ``fecha_expedicion``
+    corresponda al año indicado y devuelve ese valor + 1.
+    Si no existe ningún registro para ese año, retorna 1.
+
+    Parámetros
+    ----------
+    anio : int
+        Año de expedición de la ITSE (p. ej. 2025).
+
+    Retorna
+    -------
+    int
+        Siguiente número de ITSE disponible para el año.
+    """
+    resultado = Itse.objects.filter(
+        fecha_expedicion__year=anio,
+    ).aggregate(maximo=Max('numero_itse'))
+
+    maximo = resultado['maximo']
+    return (maximo + 1) if maximo is not None else 1
+
+
 def _validar_numero_itse_unico(numero_itse: int) -> None:
     if Itse.objects.filter(numero_itse=numero_itse).exists():
         raise ItseNumeroDuplicadoError('El número de la ITSE ya existe.')
@@ -374,14 +457,21 @@ def crear_itse(data: dict, usuario) -> Itse:
     no del cuerpo de la petición.
     """
     _validar_expediente_para_emision_itse(data['expediente_id'])
-    _validar_numero_itse_unico(data['numero_itse'])
-    _validar_recibo_pago_unico_para_itse(data['numero_recibo_pago'])
 
-    with transaction.atomic():
+    # Si no se proporcionó número de ITSE, el sistema lo determina
+    numero_itse = data.get('numero_itse') or get_siguiente_numero_itse(
+        data['fecha_expedicion'].year,
+    )
+
+    _validar_numero_itse_unico(numero_itse)
+    if data.get('numero_recibo_pago'):
+        _validar_recibo_pago_unico_para_itse(data['numero_recibo_pago'])
+
+    with set_actor(usuario), transaction.atomic():
         itse = Itse.objects.create(
             expediente_id=data['expediente_id'],
             tipo_itse_id=data['tipo_itse_id'],
-            numero_itse=data['numero_itse'],
+            numero_itse=numero_itse,
             fecha_expedicion=data['fecha_expedicion'],
             fecha_solicitud_renovacion=data['fecha_solicitud_renovacion'],
             fecha_caducidad=data['fecha_caducidad'],
@@ -457,15 +547,16 @@ def registrar_inactivacion_itse(
             'Ya existe un registro para este ITSE con el mismo estado.'
         )
 
-    return ItseEstado.objects.create(
-        itse_id=itse_id,
-        estado_id=estado_id,
-        fecha_estado=fecha_estado,
-        documento=documento,
-        observaciones=observaciones,
-        usuario=usuario,
-        fecha_digitacion=timezone.now(),
-    )
+    with set_actor(usuario):
+        return ItseEstado.objects.create(
+            itse_id=itse_id,
+            estado_id=estado_id,
+            fecha_estado=fecha_estado,
+            documento=documento,
+            observaciones=observaciones,
+            usuario=usuario,
+            fecha_digitacion=timezone.now(),
+        )
 
 
 # ── Registro de notificación de entrega ────────────────────────────────────────
@@ -475,7 +566,7 @@ class ItseNotificacionFechaInvalidaError(Exception):
     """Se lanza cuando la fecha de notificación es anterior a la fecha de expedición."""
 
 
-def registrar_notificacion_itse(itse_id: int, fecha_notificacion) -> Itse:
+def registrar_notificacion_itse(itse_id: int, fecha_notificacion, usuario=None) -> Itse:
     """
     Registra la fecha de notificación de entrega en un ITSE.
 
@@ -510,12 +601,13 @@ def registrar_notificacion_itse(itse_id: int, fecha_notificacion) -> Itse:
             f'({itse.fecha_expedicion}).'
         )
 
-    itse.fecha_notificacion = fecha_notificacion
-    itse.save(update_fields=['fecha_notificacion'])
+    with set_actor(usuario):
+        itse.fecha_notificacion = fecha_notificacion
+        itse.save(update_fields=['fecha_notificacion'])
     return itse
 
 
-def modificar_itse(itse_id: int, data: dict) -> Itse:
+def modificar_itse(itse_id: int, data: dict, usuario=None) -> Itse:
     """
     Actualiza un ITSE y reemplaza por completo la lista de giros.
 
@@ -530,9 +622,10 @@ def modificar_itse(itse_id: int, data: dict) -> Itse:
 
     _validar_expediente_para_emision_itse(data['expediente_id'], excluir_itse_id=itse_id)
     _validar_numero_itse_unico_para_update(data['numero_itse'], itse_id)
-    _validar_recibo_pago_unico_para_itse_update(data['numero_recibo_pago'], itse_id)
+    if data.get('numero_recibo_pago'):
+        _validar_recibo_pago_unico_para_itse_update(data['numero_recibo_pago'], itse_id)
 
-    with transaction.atomic():
+    with set_actor(usuario), transaction.atomic():
         itse.expediente_id = data['expediente_id']
         itse.tipo_itse_id = data['tipo_itse_id']
         itse.numero_itse = data['numero_itse']
@@ -580,7 +673,7 @@ class ItseTieneDependientesError(Exception):
     """Se lanza cuando la ITSE tiene ITSE dependientes que impiden su eliminación."""
 
 
-def eliminar_itse(pk: int) -> None:
+def eliminar_itse(pk: int, usuario=None) -> None:
     """
     Elimina una ITSE y todos sus registros dependientes.
 
@@ -626,7 +719,7 @@ def eliminar_itse(pk: int) -> None:
         .values_list('ruta_archivo', flat=True)
     )
 
-    with transaction.atomic():
+    with set_actor(usuario), transaction.atomic():
         itse.delete()
 
     for ruta in rutas_archivos:
@@ -647,111 +740,156 @@ def eliminar_itse(pk: int) -> None:
 # en el mismo SELECT principal.
 
 _SQL_CONSULTA_ITSE = """
-WITH itse_filtradas AS (
-    SELECT DISTINCT i.id
-    FROM itse i
-    LEFT JOIN expedientes e
-        ON i.expediente_id = e.id
-    LEFT JOIN personas AS ttitular
-        ON i.titular_id = ttitular.id
-    LEFT JOIN personas_documentos pd_titular
-        ON i.titular_id = pd_titular.persona_id
-    LEFT JOIN personas_documentos pd_conductor
-        ON i.conductor_id = pd_conductor.persona_id
-    {where}
-),
-titular_docs AS (
-    SELECT
-        i.id AS itse_id,
-        STRING_AGG(
-            tdi.nombre || ' ' || pd.numero_documento,
-            ', '
-            ORDER BY tdi.nombre || ' ' || pd.numero_documento
-        ) AS titular_documentos
-    FROM itse i
-    JOIN itse_filtradas i_f ON i.id = i_f.id
-    LEFT JOIN personas_documentos pd
-        ON i.titular_id = pd.persona_id
-    LEFT JOIN tipos_documento_identidad tdi
-        ON pd.tipo_documento_identidad_id = tdi.id
-    GROUP BY i.id
-),
-conductor_docs AS (
-    SELECT
-        i.id AS itse_id,
-        STRING_AGG(
-            tdi.nombre || ' ' || pd.numero_documento,
-            ', '
-            ORDER BY tdi.nombre || ' ' || pd.numero_documento
-        ) AS conductor_documentos
-    FROM itse i
-    JOIN itse_filtradas i_f ON i.id = i_f.id
-    LEFT JOIN personas_documentos pd
-        ON i.conductor_id = pd.persona_id
-    LEFT JOIN tipos_documento_identidad tdi
-        ON pd.tipo_documento_identidad_id = tdi.id
-    GROUP BY i.id
-),
-giros_concat AS (
-    SELECT
-        i.id AS itse_id,
-        COALESCE(
-            STRING_AGG(
-                TRIM(g.nombre),
-                ', '
-                ORDER BY TRIM(g.nombre)
-            ),
-            ''
-        ) AS giros
-    FROM itse i
-    JOIN itse_filtradas i_f ON i.id = i_f.id
-    LEFT JOIN itse_giros ig
-        ON i.id = ig.itse_id
-    LEFT JOIN giros g
-        ON ig.giro_id = g.id
-    GROUP BY i.id
-)
 SELECT
-    i.numero_itse,
+    itse.id,
+    itse.uuid,
+    itse.tipo_itse_id,
+    itse.numero_itse,
+    itse.fecha_expedicion,
+    itse.fecha_solicitud_renovacion,
+    itse.fecha_caducidad,
+    itse.nombre_comercial,
+    itse.direccion,
+    itse.resolucion_numero,
+    itse.area,
+    itse.numero_recibo_pago,
+    itse.observaciones,
+    itse.se_puede_publicar,
+    itse.capacidad_aforo,
+    itse.fecha_notificacion,
+    itse.fecha_digitacion,
+    itse.expediente_id,
+    itse.itse_principal_id,
+    itse.usuario_id,
+    itse.nivel_riesgo_id,
+    itse.conductor_id,
+    itse.titular_id,
+
+    td.titular_documentos_concatenados,
+    cd.conductor_documentos_concatenados,
+    gc.giro_concatenado,
+
     e.numero_expediente,
-    TRIM(
-        COALESCE(ttitular.apellido_paterno, '') || ' ' ||
-        COALESCE(ttitular.apellido_materno, '') || ' ' ||
-        COALESCE(ttitular.nombres, '')
-    ) AS titular_nombre,
-    COALESCE(td.titular_documentos, '')   AS titular_documentos,
-    TRIM(
-        COALESCE(tconductor.apellido_paterno, '') || ' ' ||
-        COALESCE(tconductor.apellido_materno, '') || ' ' ||
-        COALESCE(tconductor.nombres, '')
-    ) AS conductor_nombre,
-    COALESCE(cd.conductor_documentos, '') AS conductor_documentos,
-    i.nombre_comercial,
-    i.direccion,
-    COALESCE(gc.giros, '')                AS giros,
+    e.fecha_recepcion,
+
+    tpt.nombre AS tipos_procedimiento_tupa_nombre,
+
+    TRIM(CONCAT(
+        COALESCE(tt.apellido_paterno, ''), ' ',
+        COALESCE(tt.apellido_materno, ''), ' ',
+        COALESCE(tt.nombres, '')
+    )) AS titular_nombre,
+
+    tt.direccion AS titular_direccion,
+    tt.distrito  AS titular_distrito,
+    tt.provincia AS titular_provincia,
+    tt.departamento AS titular_departamento,
+    tt.telefono AS titular_telefono,
+    tt.correo_electronico AS titular_correo_electronico,
+
+    TRIM(CONCAT(
+        COALESCE(tc.apellido_paterno, ''), ' ',
+        COALESCE(tc.apellido_materno, ''), ' ',
+        COALESCE(tc.nombres, '')
+    )) AS conductor_nombre,
+
+    tc.direccion AS conductor_direccion,
+    tc.distrito  AS conductor_distrito,
+    tc.provincia AS conductor_provincia,
+    tc.departamento AS conductor_departamento,
+    tc.telefono AS conductor_telefono,
+    tc.correo_electronico AS conductor_correo_electronico,
+
+    nr.nombre AS nivel_riesgo_nombre,
+
     CASE
-        WHEN tinactivos.itse_id IS NULL THEN TRUE
+        WHEN itsei.itse_id IS NULL THEN TRUE
         ELSE FALSE
     END AS esta_activo
-FROM itse i
-JOIN  itse_filtradas i_f ON i.id = i_f.id
+
+FROM itse
+
 LEFT JOIN expedientes e
-    ON i.expediente_id = e.id
-LEFT JOIN personas AS ttitular
-    ON i.titular_id = ttitular.id
-LEFT JOIN personas AS tconductor
-    ON i.conductor_id = tconductor.id
-LEFT JOIN titular_docs  td ON i.id = td.itse_id
-LEFT JOIN conductor_docs cd ON i.id = cd.itse_id
-LEFT JOIN giros_concat   gc ON i.id = gc.itse_id
+    ON itse.expediente_id = e.id
+
+LEFT JOIN tipos_procedimiento_tupa tpt
+    ON e.tipo_procedimiento_tupa_id = tpt.id
+
+LEFT JOIN personas tt
+    ON itse.titular_id = tt.id
+
+LEFT JOIN personas tc
+    ON itse.conductor_id = tc.id
+
+LEFT JOIN niveles_riesgo nr
+    ON itse.nivel_riesgo_id = nr.id
+
 LEFT JOIN (
-    SELECT DISTINCT ie.itse_id
+    SELECT DISTINCT
+        ie.itse_id
     FROM itse_estados ie
-    INNER JOIN estados est ON ie.estado_id = est.id
-    WHERE est.esta_activo = FALSE
-) AS tinactivos
-    ON i.id = tinactivos.itse_id
-ORDER BY i.numero_itse DESC
+    INNER JOIN estados es
+        ON ie.estado_id = es.id
+    WHERE es.esta_activo = FALSE
+) itsei
+    ON itse.id = itsei.itse_id
+
+LEFT JOIN (
+    SELECT
+        itse2.id AS itse_id,
+        STRING_AGG(
+            tdi.nombre || ' ' || pd.numero_documento,
+            ', '
+            ORDER BY tdi.nombre, pd.numero_documento
+        ) AS titular_documentos_concatenados
+    FROM itse itse2
+    LEFT JOIN personas_documentos pd
+        ON itse2.titular_id = pd.persona_id
+    LEFT JOIN tipos_documento_identidad tdi
+        ON pd.tipo_documento_identidad_id = tdi.id
+    GROUP BY itse2.id
+) td
+    ON itse.id = td.itse_id
+
+LEFT JOIN (
+    SELECT
+        itse3.id AS itse_id,
+        STRING_AGG(
+            tdi.nombre || ' ' || pd.numero_documento,
+            ', '
+            ORDER BY tdi.nombre, pd.numero_documento
+        ) AS conductor_documentos_concatenados
+    FROM itse itse3
+    LEFT JOIN personas_documentos pd
+        ON itse3.conductor_id = pd.persona_id
+    LEFT JOIN tipos_documento_identidad tdi
+        ON pd.tipo_documento_identidad_id = tdi.id
+    GROUP BY itse3.id
+) cd
+    ON itse.id = cd.itse_id
+
+LEFT JOIN (
+    SELECT
+        itseg.itse_id,
+        STRING_AGG(
+            CASE
+                WHEN g.id IS NULL THEN NULL
+                WHEN g.ciiu_id IS NULL THEN TRIM(g.nombre)
+                ELSE LPAD(CAST(g.ciiu_id AS TEXT), 4, '0') || ' ' || TRIM(g.nombre)
+            END,
+            ', '
+            ORDER BY g.nombre
+        ) AS giro_concatenado
+    FROM itse_giros itseg
+    LEFT JOIN giros g
+        ON itseg.giro_id = g.id
+    GROUP BY itseg.itse_id
+) gc
+    ON itse.id = gc.itse_id
+
+{where}
+
+ORDER BY itse.fecha_expedicion
 """
 
 
@@ -759,67 +897,160 @@ def consultar_itse(filtros: dict) -> list[dict]:
     """
     Consulta registros ITSE aplicando filtros opcionales.
 
-    Al menos uno de los filtros debe estar presente (validado en el serializer).
+    Todos los filtros son opcionales. Si no se pasa ninguno, retorna todos los registros.
 
     Parámetros
     ----------
     filtros : dict
-        Claves aceptadas (todas opcionales, pero al menos una requerida):
+        Claves aceptadas (todas opcionales):
 
-        titular_nombre             – str  búsqueda parcial en apellidos + nombres del titular
-        numero_itse                – int  número de ITSE exacto
-        anio_itse                  – int  año de la fecha de expedición del ITSE
-        titular_numero_documento   – str  número de documento exacto del titular
-        conductor_numero_documento – str  número de documento exacto del conductor
+        numero_itse                  – int   número de ITSE exacto
+        numero_expediente            – int   número de expediente exacto
+        anio_expediente              – int   año de recepción del expediente
+
+        emision_desde                – date  inicio del rango de fecha de expedición
+        emision_hasta                – date  fin del rango de fecha de expedición
+
+        titular_nombre               – str   búsqueda parcial en apellidos + nombres del titular
+        titular_numero_documento     – str   número de documento exacto del titular
+
+        conductor_nombre             – str   búsqueda parcial en apellidos + nombres del conductor
+        conductor_numero_documento   – str   número de documento exacto del conductor
+
+        nombre_comercial             – str   búsqueda parcial en nombre comercial
+
+        nivel_riesgo_id              – int   ID del nivel de riesgo
+        direccion                    – str   búsqueda parcial en dirección
+        numero_recibo_pago           – str   número de recibo de pago exacto
+
+        fecha_notificacion_desde     – date  inicio del rango de fecha de notificación
+        fecha_notificacion_hasta     – date  fin del rango de fecha de notificación
+
+        esta_activo                  – bool  True = activas, False = inactivas
+        giro_nombre                  – str   búsqueda parcial en nombre de giro
 
     Retorna
     -------
     list[dict]
-        Una fila por ITSE.  Campos:
-          numero_itse, numero_expediente,
-          titular_nombre, titular_documentos,
-          conductor_nombre, conductor_documentos,
-          nombre_comercial, direccion, giros, esta_activo.
+        Una fila por ITSE con todos los campos del SELECT.
     """
     conditions: list[str] = []
     params: list = []
 
+    numero_itse = filtros.get('numero_itse')
+    if numero_itse is not None:
+        conditions.append('itse.numero_itse = %s')
+        params.append(int(numero_itse))
+
+    numero_expediente = filtros.get('numero_expediente')
+    if numero_expediente is not None:
+        conditions.append('e.numero_expediente = %s')
+        params.append(int(numero_expediente))
+
+    anio_expediente = filtros.get('anio_expediente')
+    if anio_expediente is not None:
+        conditions.append('EXTRACT(YEAR FROM e.fecha_recepcion) = %s')
+        params.append(int(anio_expediente))
+
+    emision_desde = filtros.get('emision_desde')
+    emision_hasta = filtros.get('emision_hasta')
+    if emision_desde and emision_hasta:
+        conditions.append('itse.fecha_expedicion BETWEEN %s AND %s')
+        params.extend([str(emision_desde), str(emision_hasta)])
+
     titular_nombre = (filtros.get('titular_nombre') or '').strip()
     if titular_nombre:
         conditions.append(
-            "TRIM("
-            "    COALESCE(ttitular.apellido_paterno, '') || ' ' ||"
-            "    COALESCE(ttitular.apellido_materno, '') || ' ' ||"
-            "    COALESCE(ttitular.nombres, '')"
-            ") ILIKE %s"
+            "TRIM(CONCAT("
+            "    COALESCE(tt.apellido_paterno, ''), ' ',"
+            "    COALESCE(tt.apellido_materno, ''), ' ',"
+            "    COALESCE(tt.nombres, '')"
+            ")) ILIKE %s"
         )
         params.append('%' + titular_nombre.replace(' ', '%') + '%')
 
-    numero_itse = filtros.get('numero_itse')
-    if numero_itse is not None:
-        conditions.append('i.numero_itse = %s')
-        params.append(numero_itse)
-
-    anio_itse = filtros.get('anio_itse')
-    if anio_itse is not None:
-        conditions.append('EXTRACT(YEAR FROM i.fecha_expedicion) = %s')
-        params.append(anio_itse)
-
     titular_numero_documento = (filtros.get('titular_numero_documento') or '').strip()
     if titular_numero_documento:
-        conditions.append('pd_titular.numero_documento = %s')
+        conditions.append(
+            "EXISTS ("
+            "    SELECT 1 FROM personas_documentos pd_titular"
+            "    WHERE pd_titular.persona_id = itse.titular_id"
+            "      AND pd_titular.numero_documento = %s"
+            ")"
+        )
         params.append(titular_numero_documento)
+
+    conductor_nombre = (filtros.get('conductor_nombre') or '').strip()
+    if conductor_nombre:
+        conditions.append(
+            "TRIM(CONCAT("
+            "    COALESCE(tc.apellido_paterno, ''), ' ',"
+            "    COALESCE(tc.apellido_materno, ''), ' ',"
+            "    COALESCE(tc.nombres, '')"
+            ")) ILIKE %s"
+        )
+        params.append('%' + conductor_nombre.replace(' ', '%') + '%')
 
     conductor_numero_documento = (filtros.get('conductor_numero_documento') or '').strip()
     if conductor_numero_documento:
-        conditions.append('pd_conductor.numero_documento = %s')
+        conditions.append(
+            "EXISTS ("
+            "    SELECT 1 FROM personas_documentos pd_conductor"
+            "    WHERE pd_conductor.persona_id = itse.conductor_id"
+            "      AND pd_conductor.numero_documento = %s"
+            ")"
+        )
         params.append(conductor_numero_documento)
 
-    where = ('WHERE ' + ' AND '.join(conditions)) if conditions else ''
+    nombre_comercial = (filtros.get('nombre_comercial') or '').strip()
+    if nombre_comercial:
+        conditions.append("TRIM(itse.nombre_comercial) ILIKE %s")
+        params.append('%' + nombre_comercial.replace(' ', '%') + '%')
 
+    nivel_riesgo_id = filtros.get('nivel_riesgo_id')
+    if nivel_riesgo_id is not None:
+        conditions.append('itse.nivel_riesgo_id = %s')
+        params.append(int(nivel_riesgo_id))
+
+    direccion = (filtros.get('direccion') or '').strip()
+    if direccion:
+        conditions.append("TRIM(itse.direccion) ILIKE %s")
+        params.append('%' + direccion.replace(' ', '%') + '%')
+
+    numero_recibo_pago = (filtros.get('numero_recibo_pago') or '').strip()
+    if numero_recibo_pago:
+        conditions.append('itse.numero_recibo_pago = %s')
+        params.append(numero_recibo_pago)
+
+    fecha_notificacion_desde = filtros.get('fecha_notificacion_desde')
+    fecha_notificacion_hasta = filtros.get('fecha_notificacion_hasta')
+    if fecha_notificacion_desde and fecha_notificacion_hasta:
+        conditions.append('itse.fecha_notificacion BETWEEN %s AND %s')
+        params.extend([str(fecha_notificacion_desde), str(fecha_notificacion_hasta)])
+
+    esta_activo = filtros.get('esta_activo')
+    if esta_activo is True:
+        conditions.append('itsei.itse_id IS NULL')
+    elif esta_activo is False:
+        conditions.append('itsei.itse_id IS NOT NULL')
+
+    giro_nombre = (filtros.get('giro_nombre') or '').strip()
+    if giro_nombre:
+        conditions.append(
+            "EXISTS ("
+            "    SELECT 1"
+            "    FROM itse_giros itseg_filtro"
+            "    INNER JOIN giros g_filtro ON itseg_filtro.giro_id = g_filtro.id"
+            "    WHERE itseg_filtro.itse_id = itse.id"
+            "      AND TRIM(g_filtro.nombre) ILIKE %s"
+            ")"
+        )
+        params.append('%' + giro_nombre.replace(' ', '%') + '%')
+
+    where = ('WHERE ' + ' AND '.join(conditions)) if conditions else ''
     sql = _SQL_CONSULTA_ITSE.format(where=where)
 
     with connection.cursor() as cursor:
         cursor.execute(sql, params)
-        columnas = [col.name for col in cursor.description]
+        columnas = [col[0] for col in cursor.description]
         return [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
