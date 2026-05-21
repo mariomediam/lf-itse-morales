@@ -582,8 +582,9 @@ class LicenciaFuncionamientoCreateSerializer(serializers.Serializer):
                                    allow_blank=True,
                                    allow_null=True,
                                )
-    se_puede_publicar        = serializers.BooleanField(default=False)
-    giros                    = _GiroItemSerializer(many=True)
+    se_puede_publicar             = serializers.BooleanField(default=False)
+    imprime_ordenanza_horario     = serializers.BooleanField(default=False)
+    giros                         = _GiroItemSerializer(many=True)
 
     def validate(self, data):
         if not data.get('es_vigencia_indeterminada'):
@@ -647,8 +648,9 @@ class LicenciaFuncionamientoUpdateSerializer(serializers.Serializer):
                                    allow_blank=True,
                                    allow_null=True,
                                )
-    se_puede_publicar        = serializers.BooleanField(default=False)
-    giros                    = _GiroItemSerializer(many=True)
+    se_puede_publicar             = serializers.BooleanField(default=False)
+    imprime_ordenanza_horario     = serializers.BooleanField(default=False)
+    giros                         = _GiroItemSerializer(many=True)
 
     def validate(self, data):
         if not data.get('es_vigencia_indeterminada'):
