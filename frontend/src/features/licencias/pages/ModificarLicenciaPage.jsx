@@ -133,6 +133,9 @@ export default function ModificarLicenciaPage() {
   // Imprime ordenanza horario
   const [imprimeOrdenanzaHorario, setImprimeOrdenanzaHorario] = useState(false)
 
+  // Tipo de establecimiento
+  const [tipoEstablecimiento, setTipoEstablecimiento] = useState('')
+
   // Observaciones
   const [observaciones, setObservaciones] = useState('')
 
@@ -205,6 +208,7 @@ export default function ModificarLicenciaPage() {
         setDireccion(lf.direccion ?? '')
         setZonificacionId(String(lf.zonificacion_id))
         setArea(String(lf.area))
+        setTipoEstablecimiento(lf.tipo_establecimiento ?? '')
 
         // Observaciones
         setObservaciones(lf.observaciones ?? '')
@@ -304,6 +308,7 @@ export default function ModificarLicenciaPage() {
       observaciones:              observaciones.trim() || null,
       se_puede_publicar:          false,
       imprime_ordenanza_horario:  imprimeOrdenanzaHorario,
+      tipo_establecimiento:       tipoEstablecimiento.trim() || null,
       giros:                      giros.map((g) => ({ giro_id: g.id })),
     }
 
@@ -619,17 +624,31 @@ export default function ModificarLicenciaPage() {
             <SeccionCard icono={IconoEstablecimiento} titulo="Información del establecimiento">
               <div className="space-y-4">
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                    Nombre comercial <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={nombreComercial}
-                    onChange={(e) => setNombreComercial(e.target.value)}
-                    placeholder="Ej. CAFETERIA EL ARTESANO"
-                    className={inputClass}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Nombre comercial <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={nombreComercial}
+                      onChange={(e) => setNombreComercial(e.target.value)}
+                      placeholder="Ej. CAFETERIA EL ARTESANO"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Tipo de establecimiento
+                    </label>
+                    <input
+                      type="text"
+                      value={tipoEstablecimiento}
+                      onChange={(e) => setTipoEstablecimiento(e.target.value)}
+                      placeholder="Ej. ARRENDATARIO (opcional)"
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
 
                 <div>

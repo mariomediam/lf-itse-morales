@@ -194,7 +194,10 @@ function CardEstablecimiento({ licencia }) {
       </div>
 
       <div className="space-y-4">
-        <Campo etiqueta="Nombre comercial"    valor={licencia.nombre_comercial} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Campo etiqueta="Nombre comercial"    valor={licencia.nombre_comercial} />
+          <Campo etiqueta="Tipo de establecimiento" valor={licencia.tipo_establecimiento} />
+        </div>
         <Campo etiqueta="Actividad económica" valor={licencia.actividad} />
         <Campo etiqueta="Dirección del local" valor={licencia.direccion} />
 

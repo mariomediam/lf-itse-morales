@@ -124,6 +124,12 @@ function LicenciaCard({ lic }) {
               {lic.nombre_comercial}
             </p>
           )}
+          {lic.tipo_establecimiento && (
+            <span className="self-start inline-flex items-center px-2 py-0.5 rounded-full
+                             text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+              {lic.tipo_establecimiento}
+            </span>
+          )}
           {lic.direccion && (
             <p className="text-xs text-gray-500">{lic.direccion}</p>
           )}
@@ -445,6 +451,7 @@ export default function ReporteLicenciasPage() {
                                     : lic.fecha_inicio_vigencia
                                       ? `${formatFecha(lic.fecha_inicio_vigencia)} - ${formatFecha(lic.fecha_fin_vigencia)}`
                                       : '',
+      'Tipo Establecimiento':     lic.tipo_establecimiento      || '',
       'Estado':                   lic.esta_activo ? 'Activa' : 'Inactiva',
       'Imprime Ord. Horario':     lic.imprime_ordenanza_horario ? 'Sí' : 'No',
     }))
