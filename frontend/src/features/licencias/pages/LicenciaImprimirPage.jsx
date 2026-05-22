@@ -6,90 +6,65 @@ import { personasApi } from '@api/personasApi'
 // ── Constantes ────────────────────────────────────────────────────────────────
 
 const CODIGO_DNI = '01'
-const CODIGO_CE  = '04'
 
-const MESES = [
-  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
-  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE',
-]
-
-const PARRAFOS_LEGALES = [
-  'Base Legal: Ley Orgánica de Municipalidades N°27972; Ley de Procedimiento Administrativo General N° 27444; Texto Único Ordenado de la Ley 27444, Ley Marco de Licencias de Funcionamiento N° 28976; Ordenanza Municipal Nº 013-2016-CM/MPR y demás normas y reglamentos.',
-  'Licencia de Funcionamiento entregada a petición de administrado según solicitud.',
-  'Cualquier modificación de las instalaciones del establecimiento, invalida automáticamente la presente autorización.',
-  'La licencia de funcionamiento se invalida cuando cambia de dirección el establecimiento.',
-  'Queda terminante prohibido el uso de la vía pública.',
-  'El presente certificado solo esta validado para el titular y deberá ser colocado en un lugar visible del establecimiento.',
-  'En caso de cese de actividades deberán comunicar por escrito a la Municipalidad, dejándose sin efecto la licencia de funcionamiento.',
-  'De conformidad a las Leyes y demás disposiciones Municipales de renovación de Licencias de Funcionamiento solo procede cuando se produzca el cambio de nombre o de giro, ampliación, uso o zonificación en el área donde se encuentra el establecimiento.',
-  'Deberán presentar la Declaración Jurada de permanencia en el Giro anualmente.',
-  'El establecimiento se encuentra sujeto a la fiscalización posterior de acuerdo al artículo 13° de la Ley N° 28976, pudiendo imponer sanciones a que hubiera lugar en caso de incumplimiento.',
-]
+const TEXTO_ORDENANZA =
+  'Ordenanza Nº 003-MDM-2011: Art Segundo- Establecer  de Jueves a Sabado y Vìsperas a un feriado ' +
+  'como horario tope  de funcionamiento hasta las  5:00 am, y Domingo a  Miercoles como horario tope ' +
+  'hasta la 1:00 am, para los locales  comerciales  como peñas,discotecas, salones de baile , karaokes, ' +
+  'video pubs, night clubs y cualquier otro lugar similar  que expendan bebidas alcohólicas para su consumo.'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const getAnio = (fechaStr) => {
+const formatFechaCorta = (fechaStr) => {
   if (!fechaStr) return '-'
-  return new Date(fechaStr).getUTCFullYear()
+  const [y, m, d] = String(fechaStr).slice(0, 10).split('-')
+  return `${parseInt(d)}/${parseInt(m)}/${y}`
 }
 
-const formatHora = (hora) => {
-  if (hora === undefined || hora === null) return '-'
-  const h = parseInt(hora, 10)
-  const periodo = h < 12 ? 'a.m.' : 'p.m.'
-  const h12 = h % 12 || 12
-  return `${h12}:00${periodo}`
+const getAnio2Digitos = (fechaStr) => {
+  if (!fechaStr) return '--'
+  return String(new Date(fechaStr).getUTCFullYear()).slice(-2)
 }
 
-const formatFechaLarga = (fechaStr) => {
-  if (!fechaStr) return '-'
-  const d = new Date(fechaStr)
-  return `${d.getUTCDate()} DE ${MESES[d.getUTCMonth()]} DEL ${d.getUTCFullYear()}`
-}
+const mayus = (str) => (str ? String(str).toUpperCase() : '-')
 
-const etiquetaDocumento = (doc) => {
-  if (!doc) return 'D.N.I.'
-  if (doc.tipos_documento_identidad_codigo === CODIGO_DNI) return 'D.N.I.'
-  if (doc.tipos_documento_identidad_codigo === CODIGO_CE)  return 'C.E.'
-  return doc.tipos_documento_identidad_nombre || 'D.N.I.'
-}
+// ── Fila etiqueta : valor (etiqueta alineada a la derecha) ───────────────────
 
-// ── Fila del certificado ──────────────────────────────────────────────────────
-
-function FilaCertificado({ label, children }) {
+function Fila({ label, children }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '10px' }}>
-      <div style={{
-        width: '185px',
-        flexShrink: 0,
-        fontWeight: 'bold',
-        fontSize: '12px',
-        letterSpacing: '0.3px',
+    <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
+      <span style={{
+        fontWeight:  'bold',
+        fontSize:    '12px',
+        flexShrink:  0,
+        width:       '168px',
+        textAlign:   'right',
+        marginRight: '6px',
+        whiteSpace:  'nowrap',
       }}>
-        {label}
-      </div>
-      <div style={{ marginRight: '6px', fontWeight: 'bold', fontSize: '12px' }}>:</div>
-      <div style={{ flex: 1, fontSize: '12px', lineHeight: '1.5' }}>{children}</div>
+        {label}:
+      </span>
+      <span style={{ fontSize: '12px', lineHeight: '1.45', flex: 1 }}>{children}</span>
     </div>
   )
 }
 
 // ── Página ────────────────────────────────────────────────────────────────────
 
-const LicenciaImprimirPage = () => {
+export default function LicenciaImprimirPage() {
   const { id }   = useParams()
   const navigate = useNavigate()
 
-  const [licencia,     setLicencia]     = useState(null)
-  const [giros,        setGiros]        = useState([])
-  const [docIdentidad, setDocIdentidad] = useState(null)
-  const [cargando,     setCargando]     = useState(true)
-  const [error,        setError]        = useState(null)
+  const [licencia,         setLicencia]         = useState(null)
+  const [giros,            setGiros]            = useState([])
+  const [docDni,           setDocDni]           = useState(null)
+  const [titularDireccion, setTitularDireccion] = useState('')
+  const [cargando,         setCargando]         = useState(true)
+  const [error,            setError]            = useState(null)
 
   useEffect(() => {
     const cargar = async () => {
       try {
-        setCargando(true)
         const [licRes, girosRes] = await Promise.all([
           licenciasApi.buscar('ID', id),
           licenciasApi.getGiros(id),
@@ -101,15 +76,22 @@ const LicenciaImprimirPage = () => {
         setLicencia(lic)
         setGiros(girosRes.data)
 
-        if (lic.conductor_id) {
-          try {
-            const docRes = await personasApi.getDocumentos(lic.conductor_id)
-            const docs   = docRes.data
-            const docDni = docs.find((d) => d.tipos_documento_identidad_codigo === CODIGO_DNI)
-            const docCe  = docs.find((d) => d.tipos_documento_identidad_codigo === CODIGO_CE)
-            setDocIdentidad(docDni || docCe || null)
-          } catch { /* continuar sin documento */ }
-        }
+        await Promise.all([
+          lic.titular_id
+            ? personasApi.buscar('ID', lic.titular_id)
+                .then((r) => setTitularDireccion(r.data[0]?.direccion ?? ''))
+                .catch(() => {})
+            : Promise.resolve(),
+          lic.conductor_id
+            ? personasApi.getDocumentos(lic.conductor_id)
+                .then((r) => {
+                  setDocDni(
+                    r.data.find((d) => d.tipos_documento_identidad_codigo === CODIGO_DNI) ?? null,
+                  )
+                })
+                .catch(() => {})
+            : Promise.resolve(),
+        ])
       } catch {
         setError('Error al cargar los datos de la licencia.')
       } finally {
@@ -119,20 +101,20 @@ const LicenciaImprimirPage = () => {
     cargar()
   }, [id])
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  // ── Carga ────────────────────────────────────────────────────────────────────
 
   if (cargando) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto" />
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700 mx-auto" />
           <p className="mt-3 text-sm text-gray-600">Cargando licencia...</p>
         </div>
       </div>
     )
   }
 
-  // ── Error ─────────────────────────────────────────────────────────────────
+  // ── Error ────────────────────────────────────────────────────────────────────
 
   if (error || !licencia) {
     return (
@@ -150,34 +132,43 @@ const LicenciaImprimirPage = () => {
     )
   }
 
-  // ── Datos calculados ──────────────────────────────────────────────────────
+  // ── Datos calculados ──────────────────────────────────────────────────────────
 
-  const anioLicencia     = getAnio(licencia.fecha_emision)
-  const anioExpediente   = getAnio(licencia.fecha_recepcion)
-  const giroPrincipal    = giros[0] ?? null
-  const girosSecundarios = giros.slice(1)
+  const sufijo           = licencia.es_vigencia_indeterminada ? 'D' : 'P'
+  const anio2            = getAnio2Digitos(licencia.fecha_emision)
+  const numeroFormateado = `${licencia.numero_licencia}-${sufijo}-${anio2}`
 
-  const horario = `${formatHora(licencia.hora_desde)} a ${formatHora(licencia.hora_hasta)}`
+  const giroTexto = giros.length > 0
+    ? giros.map((g) => g.nombre.toUpperCase()).join(' Y ')
+    : '-'
 
-  const registroFolios = `${licencia.numero_expediente ?? ''} - ${anioExpediente}`
+  const vigenciaTexto = licencia.es_vigencia_indeterminada
+    ? 'INDETERMINADA'
+    : `${formatFechaCorta(licencia.fecha_inicio_vigencia)} AL ${formatFechaCorta(licencia.fecha_fin_vigencia)}`
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Colores ───────────────────────────────────────────────────────────────────
+
+  const azulOscuro  = '#002060'
+  const azulBorde   = '#003087'
+  const verdeFooter = '#006600'
+
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <>
       <style>{`
         @media print {
-          @page { size: A4; margin: 10mm; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { size: A4 landscape; margin: 0; }
+          body  { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .no-print { display: none !important; }
         }
       `}</style>
 
-      {/* Barra de acciones */}
+      {/* ── Barra de acciones (solo pantalla) ── */}
       <div className="no-print bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-3 shadow-sm sticky top-0 z-10">
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-700 text-white text-sm font-medium rounded-lg hover:bg-blue-800 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -195,194 +186,236 @@ const LicenciaImprimirPage = () => {
           Volver
         </button>
         <span className="text-sm text-gray-500 ml-2">
-          Vista previa — LIC. N° {licencia.numero_licencia} - {anioLicencia}
+          Vista previa — LIC. N° {numeroFormateado}
         </span>
       </div>
 
-      {/* Fondo gris */}
-      <div style={{ backgroundColor: '#d1d5db', minHeight: '100vh', paddingTop: '32px', paddingBottom: '32px' }}>
+      {/* ── Fondo gris (pantalla) ── */}
+      <div style={{ backgroundColor: '#d1d5db', minHeight: '100vh', paddingTop: '28px', paddingBottom: '28px' }}>
 
-        {/* Hoja A4 */}
+        {/* ── Hoja A4 landscape: 297mm × 210mm ── */}
         <div style={{
-          width: '210mm',
-          height: '297mm',
-          margin: '0 auto',
+          width:           '297mm',
+          height:          '210mm',
+          margin:          '0 auto',
           backgroundColor: '#ffffff',
-          padding: '10mm',
-          boxSizing: 'border-box',
-          fontFamily: 'Arial, sans-serif',
-          color: '#000000',
-        }}>
-        {/* Contenido con borde interior */}
-        <div style={{
-          border: '3px solid #000000',
-          height: '100%',
-          padding: '0 0 8mm 0',
-          boxSizing: 'border-box',
-          display: 'flex',
-          flexDirection: 'column',
+          fontFamily:      'Arial, sans-serif',
+          color:           '#000000',
+          boxSizing:       'border-box',
+          padding:         '5mm',
+          display:         'flex',
+          flexDirection:   'column',
         }}>
 
-          {/* ── ENCABEZADO — ocupa el ancho completo del borde ── */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <img
-              src="/images/escudo-muni.png"
-              alt="Escudo Municipal"
-              style={{ height: '90px', width: 'auto', flexShrink: 0 }}
-              onError={(e) => { e.target.style.display = 'none' }}
-            />
-            <div style={{ textAlign: 'center', flex: 1 }}>
-              <p style={{ fontWeight: 'bold', fontSize: '24px', textTransform: 'uppercase', letterSpacing: '-0.5px', margin: 0, lineHeight: '1.2', color: '#4a9e4a', whiteSpace: 'nowrap' }}>
-                Municipalidad Provincial de Rioja
-              </p>
-            </div>
-            <img
-              src="/images/logo-lf.png"
-              alt="Logo Licencias"
-              style={{ height: '90px', width: 'auto', maxWidth: '140px', flexShrink: 0 }}
-              onError={(e) => { e.target.style.display = 'none' }}
-            />
-          </div>
-
-          {/* Resto del contenido con padding horizontal */}
-          <div style={{ flex: 1, padding: '0 10mm', display: 'flex', flexDirection: 'column' }}>
-
-          {/* ── TÍTULO ── */}
-          <div style={{ textAlign: 'center', marginBottom: '6px' }}>
-            <p style={{
-              fontWeight: 'bold',
-              fontSize: '20px',
-              textDecoration: 'underline',
-              textTransform: 'uppercase',
-              margin: '0 0 4px 0',
-              letterSpacing: '1px',
-              color: '#808000',
-            }}>
-              Licencia de Funcionamiento
-            </p>
-            <p style={{ fontSize: '10px', margin: 0, letterSpacing: '0.5px' }}>
-              ORDENANZA MUNICIPAL N° 013-2016-CM/MPR
-            </p>
-          </div>
-
-          {/* ── N° LICENCIA (derecha) ── */}
-          <div style={{ textAlign: 'right', margin: '14px 0 18px 0' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '24px', letterSpacing: '0.5px' }}>
-              LIC.&nbsp;&nbsp;N° {licencia.numero_licencia} - {anioLicencia}
-            </span>
-          </div>
-
-          {/* ── CERTIFICADO ── */}
-          <p style={{
-            fontWeight: 'bold',
-            fontSize: '12px',
-            margin: '0 0 18px 0',
-            borderBottom: '1.5px solid #000',
-            paddingBottom: '5px',
-            color: '#333399',
+          {/* ── Borde exterior azul ── */}
+          <div style={{
+            border:        `3px solid ${azulBorde}`,
+            flex:          1,
+            display:       'flex',
+            flexDirection: 'column',
           }}>
-            EL PRESENTE CERTIFICADO DE AUTORIZACIÓN MUNICIPAL:
-          </p>
 
-          {/* OTORGA A */}
-          <FilaCertificado label="OTORGA A">
-            <p style={{ margin: 0, fontWeight: 'bold', textTransform: 'uppercase', fontSize: '16px', letterSpacing: '0.5px' }}>
-              {licencia.conductor_nombre || '-'}
-            </p>
-            {docIdentidad && (
-              <p style={{ margin: '2px 0 0 0' }}>
-                {etiquetaDocumento(docIdentidad)} N° {docIdentidad.numero_documento}
-              </p>
-            )}
-          </FilaCertificado>
+            {/* ── Borde interior azul ── */}
+            <div style={{
+              border:        `1.5px solid ${azulBorde}`,
+              margin:        '3px',
+              flex:          1,
+              position:      'relative',
+              display:       'flex',
+              flexDirection: 'column',
+              overflow:      'hidden',
+            }}>
 
-          {/* NOMBRE COMERCIAL */}
-          <FilaCertificado label="NOMBRE COMERCIAL">
-            <p style={{ margin: 0, fontWeight: 'bold', textTransform: 'uppercase', fontSize: '18px', letterSpacing: '0.5px' }}>
-              "{licencia.nombre_comercial || '-'}"
-            </p>
-            {licencia.titular_ruc && (
-              <p style={{ margin: '2px 0 0 0' }}>
-                R.U.C. N° {licencia.titular_ruc}
-              </p>
-            )}
-          </FilaCertificado>
+              {/* ── Marca de agua ── */}
+              <div style={{
+                position:           'absolute',
+                inset:              0,
+                backgroundImage:    'url(/images/escudo-muni.png)',
+                backgroundRepeat:   'no-repeat',
+                backgroundPosition: 'center',
+                backgroundSize:     '55%',
+                opacity:            0.07,
+                pointerEvents:      'none',
+                zIndex:             0,
+              }} />
 
-          {/* GIRO PRINCIPAL */}
-          <FilaCertificado label="GIRO PRINCIPAL">
-            <p style={{ margin: 0, textTransform: 'uppercase' }}>
-              {giroPrincipal ? giroPrincipal.nombre : '-'}
-            </p>
-          </FilaCertificado>
+              {/* ── Contenido sobre la marca de agua ── */}
+              <div style={{
+                position:      'relative',
+                zIndex:        1,
+                flex:          1,
+                display:       'flex',
+                flexDirection: 'column',
+                padding:       '5px 12px 0 12px',
+              }}>
 
-          {/* GIRO SECUNDARIO */}
-          <FilaCertificado label="GIRO SECUNDARIO">
-            {girosSecundarios.length > 0 ? (
-              girosSecundarios.map((g, i) => (
-                <p key={g.id ?? i} style={{ margin: i > 0 ? '2px 0 0 0' : 0, textTransform: 'uppercase' }}>
-                  {g.nombre}
+                {/* ════════ ENCABEZADO ════════ */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+
+                  <img
+                    src="/images/escudo-peru.jpg"
+                    alt="Escudo del Perú"
+                    style={{ height: '68px', width: 'auto', flexShrink: 0 }}
+                    onError={(e) => { e.target.style.display = 'none' }}
+                  />
+
+                  <div style={{ flex: 1, textAlign: 'center' }}>
+                    <p style={{
+                      margin:        '0 0 2px',
+                      fontWeight:    'bold',
+                      fontSize:      '20px',
+                      color:         azulOscuro,
+                      letterSpacing: '0.5px',
+                      lineHeight:    '1.15',
+                    }}>
+                      MUNICIPALIDAD DISTRITAL DE MORALES
+                    </p>
+                    <p style={{
+                      margin:     '0 0 2px',
+                      fontWeight: 'bold',
+                      fontSize:   '12px',
+                      color:      azulOscuro,
+                    }}>
+                      GERENCIA DE DESARROLLO TERRITORIAL Y ECONÓMICO
+                    </p>
+                    <p style={{ margin: 0, fontSize: '9.5px' }}>
+                      DECRETO LEY Nº 28976 ORDENANZA MUNICIPAL Nº 009-2014-MDM
+                    </p>
+                  </div>
+
+                  <img
+                    src="/images/escudo-muni.png"
+                    alt="Escudo Municipal"
+                    style={{ height: '68px', width: 'auto', flexShrink: 0 }}
+                    onError={(e) => { e.target.style.display = 'none' }}
+                  />
+                </div>
+
+                {/* Separador azul */}
+                <hr style={{ border: 'none', borderTop: `1px solid ${azulBorde}`, margin: '0 0 5px' }} />
+
+                {/* ════════ TÍTULO ════════ */}
+                <p style={{
+                  textAlign:    'center',
+                  fontWeight:   'bold',
+                  fontSize:     '19px',
+                  color:        azulOscuro,
+                  margin:       '0 0 3px',
+                  letterSpacing:'0.4px',
+                }}>
+                  LICENCIA MUNICIPAL DE FUNCIONAMIENTO N° {numeroFormateado}
                 </p>
-              ))
-            ) : (
-              <p style={{ margin: 0 }}>-</p>
-            )}
-          </FilaCertificado>
 
-          {/* UBICADO EN */}
-          <FilaCertificado label="UBICADO EN">
-            <p style={{ margin: 0, textTransform: 'uppercase' }}>
-              {licencia.direccion || '-'}
-            </p>
-          </FilaCertificado>
+                {/* Nombre Comercial */}
+                <p style={{ textAlign: 'center', fontSize: '10px', margin: '0 0 1px', letterSpacing: '1.5px' }}>
+                  NOMBRE COMERCIAL
+                </p>
+                <p style={{
+                  textAlign:  'center',
+                  fontWeight: 'bold',
+                  fontSize:   '20px',
+                  margin:     '0 0 6px',
+                  lineHeight: '1.2',
+                }}>
+                  &ldquo;{mayus(licencia.nombre_comercial)}&rdquo;
+                </p>
 
-          {/* HORARIO */}
-          <FilaCertificado label="HORARIO">
-            <p style={{ margin: 0 }}>{horario || '-'}</p>
-          </FilaCertificado>
+                {/* ════════ DATOS ════════ */}
 
-          {/* AREA */}
-          <FilaCertificado label="AREA">
-            <p style={{ margin: 0 }}>
-              {licencia.area != null ? `${licencia.area} m².` : '-'}
-            </p>
-          </FilaCertificado>
+                <Fila label="RAZÓN SOCIAL">{mayus(licencia.titular_nombre)}</Fila>
 
-          {/* REGISTRO / FOLIOS */}
-          <FilaCertificado label="REGISTRO / FOLIOS">
-            <p style={{ margin: 0 }}>{registroFolios}</p>
-          </FilaCertificado>
+                {/* RUC + Resolución (misma fila, extremos) */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3.5px', fontSize: '12px' }}>
+                  <span style={{ paddingLeft: '174px' }}>
+                    <b>RUC:</b>&nbsp;{licencia.titular_ruc || '-'}
+                  </span>
+                  <span>{licencia.resolucion_numero || '-'}</span>
+                </div>
 
-          {/* APROBADO CON */}
-          <FilaCertificado label="APROBADO CON">
-            <p style={{ margin: 0 }}>
-              Resolución Gerencial N° {licencia.resolucion_numero || '-'}
-            </p>
-          </FilaCertificado>
+                <Fila label="UBICACIÓN">{mayus(licencia.direccion)}</Fila>
+                <Fila label="SOLICITADO POR">{mayus(licencia.conductor_nombre)}</Fila>
+                <Fila label="DNI">{docDni?.numero_documento || '-'}</Fila>
+                <Fila label="DOMICILIO FISCAL">{mayus(titularDireccion)}</Fila>
+                <Fila label="ACTIVIDAD">{mayus(licencia.actividad)}</Fila>
+                <Fila label="GIRO DEL NEGOCIO">{giroTexto}</Fila>
 
-          {/* LUGAR Y FECHA */}
-          <div style={{ textAlign: 'right', margin: '22px 0 0 0', fontSize: '12px', fontWeight: 'bold' }}>
-            RIOJA, {formatFechaLarga(licencia.fecha_emision)}
-          </div>
+                {/* Área + Horario (misma fila) */}
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px', fontSize: '12px' }}>
+                  <span style={{ width: '168px', textAlign: 'right', marginRight: '6px', fontWeight: 'bold', flexShrink: 0 }}>
+                    Área Autorizada:
+                  </span>
+                  <span style={{ flex: 1 }}>
+                    *****{licencia.area != null ? Number(licencia.area).toFixed(2) : '-'} m²*****
+                  </span>
+                  <span style={{ marginLeft: '24px' }}>
+                    <b>Horario:</b>&nbsp;
+                    {licencia.hora_desde != null && licencia.hora_hasta != null
+                      ? `${licencia.hora_desde} - ${licencia.hora_hasta} horas`
+                      : '-'}
+                  </span>
+                </div>
 
-          {/* Espaciador: empuja los párrafos al fondo */}
-          <div style={{ flex: 1 }} />
+                <Fila label="TIPO ESTABLECIMIENTO">{mayus(licencia.tipo_establecimiento)}</Fila>
 
-          {/* ── PÁRRAFOS LEGALES ── */}
-          <div style={{ borderTop: '1px solid #000', paddingTop: '8px' }}>
-            {PARRAFOS_LEGALES.map((texto, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '3px' }}>
-                <span style={{ marginRight: '5px', fontSize: '9px', lineHeight: '1.5', flexShrink: 0 }}>❖</span>
-                <p style={{ margin: 0, fontSize: '9px', lineHeight: '1.4' }}>{texto}</p>
-              </div>
-            ))}
-          </div>
+                {/* Inscrita + Fecha (misma fila) */}
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px', fontSize: '12px' }}>
+                  <span style={{ width: '168px', textAlign: 'right', marginRight: '6px', fontWeight: 'bold', flexShrink: 0 }}>
+                    Inscrita en la Base de Datos con Código:
+                  </span>
+                  <span style={{ flex: 1 }}>
+                    <b>{licencia.codigo_inscripcion || '-'}</b>
+                  </span>
+                  <span style={{ marginLeft: '32px' }}>
+                    <b>Fecha:</b>&nbsp;{formatFechaCorta(licencia.fecha_emision)}
+                  </span>
+                </div>
 
-          </div>{/* fin contenido con padding */}
-        </div>{/* fin borde interior */}
-        </div>{/* fin hoja A4 */}
+                {/* Vigencia */}
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '4px', fontSize: '13px' }}>
+                  <span style={{ width: '168px', textAlign: 'right', marginRight: '6px', fontWeight: 'bold', flexShrink: 0 }}>
+                    VIGENCIA:
+                  </span>
+                  <span style={{ fontWeight: 'bold' }}>{vigenciaTexto}</span>
+                </div>
+
+                {/* Ordenanza (50 % ancho, solo si aplica) */}
+                {licencia.imprime_ordenanza_horario && (
+                  <p style={{
+                    width:      '50%',
+                    fontSize:   '8.5px',
+                    lineHeight: '1.45',
+                    margin:     '2px 0 4px 174px',
+                    textAlign:  'justify',
+                  }}>
+                    {TEXTO_ORDENANZA}
+                  </p>
+                )}
+
+                {/* Espaciador */}
+                <div style={{ flex: 1 }} />
+
+                {/* ════════ PIE DE PÁGINA ════════ */}
+                <div style={{
+                  borderTop:      '1px solid #000000',
+                  paddingTop:     '4px',
+                  paddingBottom:  '4px',
+                  display:        'flex',
+                  justifyContent: 'space-between',
+                  gap:            '12px',
+                }}>
+                  <span style={{ fontSize: '8px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter }}>
+                    ESTE DOCUMENTO NO DEBE CONTENER BORRONES NI ENMENDADURAS PARA SU VALIDEZ
+                  </span>
+                  <span style={{ fontSize: '8px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter, textAlign: 'right' }}>
+                    ESTE DOCUMENTO SE DEBERA COLOCAR EN UN LUGAR VISIBLE
+                  </span>
+                </div>
+
+              </div>{/* fin contenido */}
+            </div>{/* fin borde interior */}
+          </div>{/* fin borde exterior */}
+        </div>{/* fin hoja A4 landscape */}
       </div>{/* fin fondo gris */}
     </>
   )
 }
-
-export default LicenciaImprimirPage
