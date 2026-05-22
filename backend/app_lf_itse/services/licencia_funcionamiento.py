@@ -76,6 +76,7 @@ SELECT
     lf.fecha_digitacion,
     lf.imprime_ordenanza_horario,
     lf.tipo_establecimiento,
+    lf.codigo_inscripcion,
     e.numero_expediente,
     e.fecha_recepcion,
     TRIM(
@@ -491,6 +492,7 @@ def crear_licencia(data: dict, usuario) -> LicenciaFuncionamiento:
             se_puede_publicar          = data.get('se_puede_publicar', False),
             imprime_ordenanza_horario  = data.get('imprime_ordenanza_horario', False),
             tipo_establecimiento       = data.get('tipo_establecimiento'),
+            codigo_inscripcion         = data.get('codigo_inscripcion'),
             usuario                    = usuario,
             fecha_digitacion      = timezone.now(),
         )
@@ -590,6 +592,7 @@ def modificar_licencia(licencia_id: int, data: dict, usuario=None) -> LicenciaFu
         licencia.se_puede_publicar         = data.get('se_puede_publicar', False)
         licencia.imprime_ordenanza_horario = data.get('imprime_ordenanza_horario', False)
         licencia.tipo_establecimiento      = data.get('tipo_establecimiento')
+        licencia.codigo_inscripcion        = data.get('codigo_inscripcion')
         licencia.save()
 
         # Reemplaza completamente los giros asociados
@@ -846,6 +849,7 @@ SELECT
     lf.fecha_digitacion,
     lf.imprime_ordenanza_horario,
     lf.tipo_establecimiento,
+    lf.codigo_inscripcion,
 
     td.titular_documentos_concatenados,
     cd.conductor_documentos_concatenados,

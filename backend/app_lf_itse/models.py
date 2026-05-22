@@ -411,6 +411,7 @@ class LicenciaFuncionamiento(models.Model):
     fecha_digitacion = models.DateTimeField()
     imprime_ordenanza_horario = models.BooleanField(default=False)
     tipo_establecimiento = models.CharField(max_length=50, blank=True, null=True)
+    codigo_inscripcion = models.CharField(max_length=20, blank=True, null=True)
 
     class Meta:
         db_table = 'licencias_funcionamiento'
