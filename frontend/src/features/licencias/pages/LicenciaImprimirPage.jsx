@@ -34,17 +34,17 @@ function Fila({ label, children }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
       <span style={{
-        fontWeight:  'bold',
-        fontSize:    '12px',
-        flexShrink:  0,
-        width:       '168px',
-        textAlign:   'right',
-        marginRight: '6px',
-        whiteSpace:  'nowrap',
+        fontWeight: 'bold',
+        fontSize: '17px',
+        flexShrink: 0,
+        width: '168px',
+        textAlign: 'right',
+        marginRight: '12px',
+        whiteSpace: 'nowrap',
       }}>
         {label}:
       </span>
-      <span style={{ fontSize: '12px', lineHeight: '1.45', flex: 1 }}>{children}</span>
+      <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}>{children}</span>
     </div>
   )
 }
@@ -52,15 +52,15 @@ function Fila({ label, children }) {
 // ── Página ────────────────────────────────────────────────────────────────────
 
 export default function LicenciaImprimirPage() {
-  const { id }   = useParams()
+  const { id } = useParams()
   const navigate = useNavigate()
 
-  const [licencia,         setLicencia]         = useState(null)
-  const [giros,            setGiros]            = useState([])
-  const [docDni,           setDocDni]           = useState(null)
+  const [licencia, setLicencia] = useState(null)
+  const [giros, setGiros] = useState([])
+  const [docDni, setDocDni] = useState(null)
   const [titularDireccion, setTitularDireccion] = useState('')
-  const [cargando,         setCargando]         = useState(true)
-  const [error,            setError]            = useState(null)
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     const cargar = async () => {
@@ -79,17 +79,17 @@ export default function LicenciaImprimirPage() {
         await Promise.all([
           lic.titular_id
             ? personasApi.buscar('ID', lic.titular_id)
-                .then((r) => setTitularDireccion(r.data[0]?.direccion ?? ''))
-                .catch(() => {})
+              .then((r) => setTitularDireccion(r.data[0]?.direccion ?? ''))
+              .catch(() => { })
             : Promise.resolve(),
           lic.conductor_id
             ? personasApi.getDocumentos(lic.conductor_id)
-                .then((r) => {
-                  setDocDni(
-                    r.data.find((d) => d.tipos_documento_identidad_codigo === CODIGO_DNI) ?? null,
-                  )
-                })
-                .catch(() => {})
+              .then((r) => {
+                setDocDni(
+                  r.data.find((d) => d.tipos_documento_identidad_codigo === CODIGO_DNI) ?? null,
+                )
+              })
+              .catch(() => { })
             : Promise.resolve(),
         ])
       } catch {
@@ -134,8 +134,8 @@ export default function LicenciaImprimirPage() {
 
   // ── Datos calculados ──────────────────────────────────────────────────────────
 
-  const sufijo           = licencia.es_vigencia_indeterminada ? 'D' : 'P'
-  const anio2            = getAnio2Digitos(licencia.fecha_emision)
+  const sufijo = licencia.es_vigencia_indeterminada ? 'D' : 'P'
+  const anio2 = getAnio2Digitos(licencia.fecha_emision)
   const numeroFormateado = `${licencia.numero_licencia}-${sufijo}-${anio2}`
 
   const giroTexto = giros.length > 0
@@ -148,8 +148,8 @@ export default function LicenciaImprimirPage() {
 
   // ── Colores ───────────────────────────────────────────────────────────────────
 
-  const azulOscuro  = '#002060'
-  const azulBorde   = '#003087'
+  const azulOscuro = '#002060'
+  const azulBorde = '#003087'
   const verdeFooter = '#006600'
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -195,58 +195,58 @@ export default function LicenciaImprimirPage() {
 
         {/* ── Hoja A4 landscape: 297mm × 210mm ── */}
         <div style={{
-          width:           '297mm',
-          height:          '210mm',
-          margin:          '0 auto',
+          width: '297mm',
+          height: '210mm',
+          margin: '0 auto',
           backgroundColor: '#ffffff',
-          fontFamily:      'Arial, sans-serif',
-          color:           '#000000',
-          boxSizing:       'border-box',
-          padding:         '5mm',
-          display:         'flex',
-          flexDirection:   'column',
+          fontFamily: 'Arial, sans-serif',
+          color: '#000000',
+          boxSizing: 'border-box',
+          padding: '10mm',
+          display: 'flex',
+          flexDirection: 'column',
         }}>
 
           {/* ── Borde exterior azul ── */}
           <div style={{
-            border:        `3px solid ${azulBorde}`,
-            flex:          1,
-            display:       'flex',
+            border: `4px solid ${azulBorde}`,
+            flex: 1,
+            display: 'flex',
             flexDirection: 'column',
           }}>
 
             {/* ── Borde interior azul ── */}
             <div style={{
-              border:        `1.5px solid ${azulBorde}`,
-              margin:        '3px',
-              flex:          1,
-              position:      'relative',
-              display:       'flex',
+              border: `4px solid ${azulBorde}`,
+              margin: '3px',
+              flex: 1,
+              position: 'relative',
+              display: 'flex',
               flexDirection: 'column',
-              overflow:      'hidden',
+              overflow: 'hidden',
             }}>
 
               {/* ── Marca de agua ── */}
               <div style={{
-                position:           'absolute',
-                inset:              0,
-                backgroundImage:    'url(/images/escudo-muni.png)',
-                backgroundRepeat:   'no-repeat',
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: 'url(/images/escudo-muni.png)',
+                backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                backgroundSize:     '55%',
-                opacity:            0.07,
-                pointerEvents:      'none',
-                zIndex:             0,
+                backgroundSize: '55%',
+                opacity: 0.07,
+                pointerEvents: 'none',
+                zIndex: 0,
               }} />
 
               {/* ── Contenido sobre la marca de agua ── */}
               <div style={{
-                position:      'relative',
-                zIndex:        1,
-                flex:          1,
-                display:       'flex',
+                position: 'relative',
+                zIndex: 1,
+                flex: 1,
+                display: 'flex',
                 flexDirection: 'column',
-                padding:       '5px 12px 0 12px',
+                padding: '5px 12px 0 12px',
               }}>
 
                 {/* ════════ ENCABEZADO ════════ */}
@@ -255,30 +255,30 @@ export default function LicenciaImprimirPage() {
                   <img
                     src="/images/escudo-peru.jpg"
                     alt="Escudo del Perú"
-                    style={{ height: '68px', width: 'auto', flexShrink: 0 }}
+                    style={{ height: '100px', width: 'auto', flexShrink: 0 }}
                     onError={(e) => { e.target.style.display = 'none' }}
                   />
 
                   <div style={{ flex: 1, textAlign: 'center' }}>
                     <p style={{
-                      margin:        '0 0 2px',
-                      fontWeight:    'bold',
-                      fontSize:      '20px',
-                      color:         azulOscuro,
+                      margin: '0 0 2px',
+                      fontWeight: 'bold',
+                      fontSize: '28px',
+                      color: azulOscuro,
                       letterSpacing: '0.5px',
-                      lineHeight:    '1.15',
+                      lineHeight: '1.15',
                     }}>
                       MUNICIPALIDAD DISTRITAL DE MORALES
                     </p>
                     <p style={{
-                      margin:     '0 0 2px',
+                      margin: '0 0 2px',
                       fontWeight: 'bold',
-                      fontSize:   '12px',
-                      color:      azulOscuro,
+                      fontSize: '17px',
+                      color: azulOscuro,
                     }}>
                       GERENCIA DE DESARROLLO TERRITORIAL Y ECONÓMICO
                     </p>
-                    <p style={{ margin: 0, fontSize: '9.5px' }}>
+                    <p style={{ margin: 0, fontSize: '12.7px' }}>
                       DECRETO LEY Nº 28976 ORDENANZA MUNICIPAL Nº 009-2014-MDM
                     </p>
                   </div>
@@ -286,35 +286,35 @@ export default function LicenciaImprimirPage() {
                   <img
                     src="/images/escudo-muni.png"
                     alt="Escudo Municipal"
-                    style={{ height: '68px', width: 'auto', flexShrink: 0 }}
+                    style={{ height: '100px', width: 'auto', flexShrink: 0 }}
                     onError={(e) => { e.target.style.display = 'none' }}
                   />
                 </div>
 
                 {/* Separador azul */}
-                <hr style={{ border: 'none', borderTop: `1px solid ${azulBorde}`, margin: '0 0 5px' }} />
+                {/* <hr style={{ border: 'none', borderTop: `1px solid ${azulBorde}`, margin: '0 0 5px' }} /> */}
 
                 {/* ════════ TÍTULO ════════ */}
                 <p style={{
-                  textAlign:    'center',
-                  fontWeight:   'bold',
-                  fontSize:     '19px',
-                  color:        azulOscuro,
-                  margin:       '0 0 3px',
-                  letterSpacing:'0.4px',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '29px',
+                  color: azulOscuro,
+                  margin: '0 0 2px',
+                  letterSpacing: '0.4px',
                 }}>
                   LICENCIA MUNICIPAL DE FUNCIONAMIENTO N° {numeroFormateado}
                 </p>
 
                 {/* Nombre Comercial */}
-                <p style={{ textAlign: 'center', fontSize: '10px', margin: '0 0 1px', letterSpacing: '1.5px' }}>
+                <p style={{ textAlign: 'center', fontSize: '12px', margin: '6px 0 1px', letterSpacing: '1.5px' }}>
                   NOMBRE COMERCIAL
                 </p>
                 <p style={{
-                  textAlign:  'center',
+                  textAlign: 'center',
                   fontWeight: 'bold',
-                  fontSize:   '20px',
-                  margin:     '0 0 6px',
+                  fontSize: '30px',
+                  margin: '8px 0 6px',
                   lineHeight: '1.2',
                 }}>
                   &ldquo;{mayus(licencia.nombre_comercial)}&rdquo;
@@ -325,12 +325,33 @@ export default function LicenciaImprimirPage() {
                 <Fila label="RAZÓN SOCIAL">{mayus(licencia.titular_nombre)}</Fila>
 
                 {/* RUC + Resolución (misma fila, extremos) */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3.5px', fontSize: '12px' }}>
+                {/* <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3.5px', fontSize: '12px' }}>
                   <span style={{ paddingLeft: '174px' }}>
                     <b>RUC:</b>&nbsp;{licencia.titular_ruc || '-'}
                   </span>
                   <span>{licencia.resolucion_numero || '-'}</span>
+                </div> */}
+
+
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
+                  <span style={{
+                    fontWeight: 'bold',
+                    fontSize: '17px',
+                    flexShrink: 0,
+                    width: '168px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    RUC:
+                  </span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}>{licencia.titular_ruc || '-'}</span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}>{licencia.resolucion_numero || '-'}</span>
                 </div>
+
+
+
+
 
                 <Fila label="UBICACIÓN">{mayus(licencia.direccion)}</Fila>
                 <Fila label="SOLICITADO POR">{mayus(licencia.conductor_nombre)}</Fila>
@@ -340,7 +361,7 @@ export default function LicenciaImprimirPage() {
                 <Fila label="GIRO DEL NEGOCIO">{giroTexto}</Fila>
 
                 {/* Área + Horario (misma fila) */}
-                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px', fontSize: '12px' }}>
+                {/* <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px', fontSize: '12px' }}>
                   <span style={{ width: '168px', textAlign: 'right', marginRight: '6px', fontWeight: 'bold', flexShrink: 0 }}>
                     Área Autorizada:
                   </span>
@@ -353,12 +374,46 @@ export default function LicenciaImprimirPage() {
                       ? `${licencia.hora_desde} - ${licencia.hora_hasta} horas`
                       : '-'}
                   </span>
+                </div> */}
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
+                  <span style={{
+                    fontWeight: 'bold',
+                    fontSize: '17px',
+                    flexShrink: 0,
+                    width: '168px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Área Autorizada:
+                  </span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> *****{licencia.area != null ? Number(licencia.area).toFixed(2) : '-'} m²*****</span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}><b>Horario:</b>&nbsp;
+                    {licencia.hora_desde != null && licencia.hora_hasta != null
+                      ? `${licencia.hora_desde} - ${licencia.hora_hasta} horas`
+                      : '-'}</span>
                 </div>
 
-                <Fila label="TIPO ESTABLECIMIENTO">{mayus(licencia.tipo_establecimiento)}</Fila>
+                {/* <Fila label="TIPO ESTABLECIMIENTO">{mayus(licencia.tipo_establecimiento)}</Fila> */}
+
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
+                  <span style={{
+                    fontWeight: 'bold',
+                    fontSize: '17px',
+                    flexShrink: 0,
+                    width: '210px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    TIPO ESTABLECIMIENTO:
+                  </span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> {mayus(licencia.tipo_establecimiento)}</span>                  
+                  
+                </div>
 
                 {/* Inscrita + Fecha (misma fila) */}
-                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px', fontSize: '12px' }}>
+                {/* <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px', fontSize: '12px' }}>
                   <span style={{ width: '168px', textAlign: 'right', marginRight: '6px', fontWeight: 'bold', flexShrink: 0 }}>
                     Inscrita en la Base de Datos con Código:
                   </span>
@@ -368,24 +423,57 @@ export default function LicenciaImprimirPage() {
                   <span style={{ marginLeft: '32px' }}>
                     <b>Fecha:</b>&nbsp;{formatFechaCorta(licencia.fecha_emision)}
                   </span>
+                </div> */}
+
+                
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
+                  <span style={{
+                    fontWeight: 'bold',
+                    fontSize: '17px',
+                    flexShrink: 0,
+                    width: '330px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Inscrita en la Base de Datos con Código:
+                  </span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> {licencia.codigo_inscripcion || '-'}<b style={{ marginLeft: '195px' }}>Fecha:</b>&nbsp;{formatFechaCorta(licencia.fecha_emision)}</span>                  
+                 
                 </div>
 
                 {/* Vigencia */}
-                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '4px', fontSize: '13px' }}>
+                {/* <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '4px', fontSize: '13px' }}>
                   <span style={{ width: '168px', textAlign: 'right', marginRight: '6px', fontWeight: 'bold', flexShrink: 0 }}>
                     VIGENCIA:
                   </span>
                   <span style={{ fontWeight: 'bold' }}>{vigenciaTexto}</span>
+                </div> */}
+
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
+                  <span style={{
+                    fontWeight: 'bold',
+                    fontSize: '17px',
+                    flexShrink: 0,
+                    width: '168px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Vigencia:
+                  </span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1, fontWeight: 'bold' }}> {vigenciaTexto}</span>                  
+                 
                 </div>
 
                 {/* Ordenanza (50 % ancho, solo si aplica) */}
                 {licencia.imprime_ordenanza_horario && (
                   <p style={{
-                    width:      '50%',
-                    fontSize:   '8.5px',
+                    width: '55%',
+                    fontSize: '12px',
                     lineHeight: '1.45',
-                    margin:     '2px 0 4px 174px',
-                    textAlign:  'justify',
+                    margin: '2px 0 4px 12px',
+                    textAlign: 'justify',
                   }}>
                     {TEXTO_ORDENANZA}
                   </p>
@@ -396,17 +484,17 @@ export default function LicenciaImprimirPage() {
 
                 {/* ════════ PIE DE PÁGINA ════════ */}
                 <div style={{
-                  borderTop:      '1px solid #000000',
-                  paddingTop:     '4px',
-                  paddingBottom:  '4px',
-                  display:        'flex',
+                  
+                  paddingTop: '4px',
+                  paddingBottom: '4px',
+                  display: 'flex',
                   justifyContent: 'space-between',
-                  gap:            '12px',
+                  gap: '12px',
                 }}>
-                  <span style={{ fontSize: '8px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter }}>
+                  <span style={{ fontSize: '10px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter }}>
                     ESTE DOCUMENTO NO DEBE CONTENER BORRONES NI ENMENDADURAS PARA SU VALIDEZ
                   </span>
-                  <span style={{ fontSize: '8px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter, textAlign: 'right' }}>
+                  <span style={{ fontSize: '10px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter, textAlign: 'right' }}>
                     ESTE DOCUMENTO SE DEBERA COLOCAR EN UN LUGAR VISIBLE
                   </span>
                 </div>
