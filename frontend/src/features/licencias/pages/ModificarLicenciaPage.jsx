@@ -136,6 +136,9 @@ export default function ModificarLicenciaPage() {
   // Tipo de establecimiento
   const [tipoEstablecimiento, setTipoEstablecimiento] = useState('')
 
+  // Código de inscripción
+  const [codigoInscripcion, setCodigoInscripcion] = useState('')
+
   // Observaciones
   const [observaciones, setObservaciones] = useState('')
 
@@ -209,6 +212,7 @@ export default function ModificarLicenciaPage() {
         setZonificacionId(String(lf.zonificacion_id))
         setArea(String(lf.area))
         setTipoEstablecimiento(lf.tipo_establecimiento ?? '')
+        setCodigoInscripcion(lf.codigo_inscripcion ?? '')
 
         // Observaciones
         setObservaciones(lf.observaciones ?? '')
@@ -309,6 +313,7 @@ export default function ModificarLicenciaPage() {
       se_puede_publicar:          false,
       imprime_ordenanza_horario:  imprimeOrdenanzaHorario,
       tipo_establecimiento:       tipoEstablecimiento.trim() || null,
+      codigo_inscripcion:         codigoInscripcion.trim() || null,
       giros:                      giros.map((g) => ({ giro_id: g.id })),
     }
 
@@ -554,8 +559,8 @@ export default function ModificarLicenciaPage() {
                   </div>
                 </div>
 
-                {/* Fila 4: Recibo + Imprime ordenanza */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                {/* Fila 4: Recibo + Código inscripción + Imprime ordenanza */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">
                       N° de recibo de pago
@@ -565,6 +570,18 @@ export default function ModificarLicenciaPage() {
                       value={numeroReciboPago}
                       onChange={(e) => setNumeroReciboPago(e.target.value)}
                       placeholder="Ej. 00567587 (opcional)"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Código de inscripción en base de datos
+                    </label>
+                    <input
+                      type="text"
+                      value={codigoInscripcion}
+                      onChange={(e) => setCodigoInscripcion(e.target.value)}
+                      placeholder="Ej. 003168 (opcional)"
                       className={inputClass}
                     />
                   </div>
