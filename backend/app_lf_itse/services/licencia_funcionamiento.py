@@ -96,7 +96,15 @@ SELECT
     END AS esta_activo,
     tl.nombre  AS tipo_licencia_nombre,
     z.nombre   AS zonificacion_nombre,
-    nr.nombre  AS nivel_riesgo_nombre
+    nr.nombre  AS nivel_riesgo_nombre,
+    ttitular.direccion AS titular_direccion,
+    ttitular.distrito AS titular_distrito,
+    ttitular.provincia AS titular_provincia,
+    ttitular.departamento AS titular_departamento,
+    tconductor.direccion AS conductor_direccion,
+    tconductor.distrito AS conductor_distrito,
+    tconductor.provincia AS conductor_provincia,
+    tconductor.departamento AS conductor_departamento
 FROM licencias_funcionamiento lf
 LEFT JOIN tipos_licencia tl
     ON lf.tipo_licencia_id = tl.id
