@@ -51,6 +51,7 @@ SELECT
     i.fecha_notificacion,
     i.usuario_id,
     i.fecha_digitacion,
+    i.uuid,
     e.numero_expediente,
     e.fecha_recepcion,
     TRIM(

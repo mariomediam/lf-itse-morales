@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { QRCode } from 'react-qr-code'
 import { licenciasApi } from '@api/licenciasApi'
 import { personasApi } from '@api/personasApi'
+import { configPublicaApi } from '@api/configPublicaApi'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -61,13 +63,15 @@ export default function LicenciaImprimirPage() {
   const [titularDireccion, setTitularDireccion] = useState('')
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
+  const [qrUrl, setQrUrl] = useState(null)
 
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [licRes, girosRes] = await Promise.all([
+        const [licRes, girosRes, configRes] = await Promise.all([
           licenciasApi.buscar('ID', id),
           licenciasApi.getGiros(id),
+          configPublicaApi.getConfig().catch(() => ({ data: {} })),
         ])
 
         const lic = licRes.data[0]
@@ -75,6 +79,12 @@ export default function LicenciaImprimirPage() {
 
         setLicencia(lic)
         setGiros(girosRes.data)
+
+        const cfg = configRes.data
+        if (cfg.qr_verificacion_habilitado && cfg.qr_url_verificar_licencia && lic.uuid) {
+          const base = cfg.qr_url_verificar_licencia.replace(/\/+$/, '')
+          setQrUrl(`${base}/${lic.uuid}`)
+        }
 
         await Promise.all([
           lic.titular_id
@@ -408,8 +418,8 @@ export default function LicenciaImprimirPage() {
                   }}>
                     TIPO ESTABLECIMIENTO:
                   </span>
-                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> {mayus(licencia.tipo_establecimiento)}</span>                  
-                  
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> {mayus(licencia.tipo_establecimiento)}</span>
+
                 </div>
 
                 {/* Inscrita + Fecha (misma fila) */}
@@ -425,7 +435,7 @@ export default function LicenciaImprimirPage() {
                   </span>
                 </div> */}
 
-                
+
                 <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
                   <span style={{
                     fontWeight: 'bold',
@@ -438,8 +448,8 @@ export default function LicenciaImprimirPage() {
                   }}>
                     Inscrita en la Base de Datos con Código:
                   </span>
-                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> {licencia.codigo_inscripcion || '-'}<b style={{ marginLeft: '195px' }}>Fecha:</b>&nbsp;{formatFechaCorta(licencia.fecha_emision)}</span>                  
-                 
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> {licencia.codigo_inscripcion || '-'}<b style={{ marginLeft: '195px' }}>Fecha:</b>&nbsp;{formatFechaCorta(licencia.fecha_emision)}</span>
+
                 </div>
 
                 {/* Vigencia */}
@@ -462,38 +472,51 @@ export default function LicenciaImprimirPage() {
                   }}>
                     Vigencia:
                   </span>
-                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1, fontWeight: 'bold' }}> {vigenciaTexto}</span>                  
-                 
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1, fontWeight: 'bold' }}> {vigenciaTexto}</span>
+
                 </div>
 
-                {/* Ordenanza (50 % ancho, solo si aplica) */}
-                {licencia.imprime_ordenanza_horario && (
-                  <p style={{
-                    width: '55%',
-                    fontSize: '12px',
-                    lineHeight: '1.45',
-                    margin: '2px 0 4px 12px',
-                    textAlign: 'justify',
-                  }}>
-                    {TEXTO_ORDENANZA}
-                  </p>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  {licencia.imprime_ordenanza_horario && (
+                    <p style={{
+                      width: '55%',
+                      fontSize: '12px',
+                      lineHeight: '1.45',
+                      margin: '2px 0 4px 12px',
+                      textAlign: 'justify',
+                    }}>
+                      {TEXTO_ORDENANZA}
+                    </p>
+                  )}
+                  {qrUrl && (
+                    <div style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <QRCode value={qrUrl} size={72} level="M" />
+                      <p style={{ fontSize: '7px', margin: '3px 0 0 0', textAlign: 'center', color: '#555' }}>
+                        Verificar documento
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+
 
                 {/* Espaciador */}
                 <div style={{ flex: 1 }} />
 
                 {/* ════════ PIE DE PÁGINA ════════ */}
                 <div style={{
-                  
+
                   paddingTop: '4px',
                   paddingBottom: '4px',
                   display: 'flex',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
                   gap: '12px',
                 }}>
                   <span style={{ fontSize: '10px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter }}>
                     ESTE DOCUMENTO NO DEBE CONTENER BORRONES NI ENMENDADURAS PARA SU VALIDEZ
                   </span>
+                  
                   <span style={{ fontSize: '10px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter, textAlign: 'right' }}>
                     ESTE DOCUMENTO SE DEBERA COLOCAR EN UN LUGAR VISIBLE
                   </span>

@@ -77,6 +77,7 @@ SELECT
     lf.imprime_ordenanza_horario,
     lf.tipo_establecimiento,
     lf.codigo_inscripcion,
+    lf.uuid,
     e.numero_expediente,
     e.fecha_recepcion,
     TRIM(
