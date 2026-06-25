@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
-    container_name: app_backend_prod
+    container_name: morales_backend_prod
     env_file:
       - ./backend/.env.prod
     ports:
@@ -21,22 +21,22 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
-    container_name: app_frontend_prod
+    container_name: morales_frontend_prod
     ports:
-      - "81:80"
+      - "8080:80"
     depends_on:
       - backend
     restart: unless-stopped
 
   db:
     image: postgres:17.9-alpine
-    container_name: app_db_prod
+    container_name: morales_db_prod
     env_file:
       - ./backend/.env.prod
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
+      - morales_postgres_data_prod:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
@@ -45,4 +45,4 @@ services:
       retries: 5
 
 volumes:
-  postgres_data_prod:
+  morales_postgres_data_prod:

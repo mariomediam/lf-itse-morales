@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: app_backend_dev
+    container_name: morales_backend_dev
     volumes:
       - ./backend:/app
     ports:
@@ -11,7 +11,8 @@ services:
     env_file:
       - ./backend/.env.dev  # ← Usar variables de desarrollo
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     stdin_open: true
     tty: true
 
@@ -19,30 +20,34 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: app_frontend_dev
+    container_name: morales_frontend_dev
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
       - "5173:5173"
     environment:
-      # - VITE_API_URL=http://192.168.4.227:8000
-      - VITE_API_URL=http://localhost:8000
       - CHOKIDAR_USEPOLLING=true
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     stdin_open: true
     tty: true
 
   db:
     image: postgres:17.9-alpine
-    container_name: app_db_dev
+    container_name: morales_db_dev
     env_file:
       - ./backend/.env.dev  # ← Usar variables de desarrollo
     volumes:
-      - postgres_data_dev:/var/lib/postgresql/data
+      - morales_postgres_data_dev:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  postgres_data_dev:
+  morales_postgres_data_dev:
