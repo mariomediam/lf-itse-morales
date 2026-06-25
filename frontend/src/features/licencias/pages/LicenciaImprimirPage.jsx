@@ -169,8 +169,26 @@ export default function LicenciaImprimirPage() {
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 0; }
-          body  { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
           .no-print { display: none !important; }
+          .print-bg-wrapper {
+            background: white !important;
+            min-height: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .print-page {
+            margin: 0 !important;
+            height: 210mm !important;
+            min-height: auto !important;
+            overflow: hidden !important;
+          }
         }
       `}</style>
 
@@ -201,10 +219,10 @@ export default function LicenciaImprimirPage() {
       </div>
 
       {/* ── Fondo gris (pantalla) ── */}
-      <div style={{ backgroundColor: '#d1d5db', minHeight: '100vh', paddingTop: '28px', paddingBottom: '28px' }}>
+      <div className="print-bg-wrapper" style={{ backgroundColor: '#d1d5db', minHeight: '100vh', paddingTop: '28px', paddingBottom: '28px' }}>
 
         {/* ── Hoja A4 landscape: 297mm × 210mm ── */}
-        <div style={{
+        <div className="print-page" style={{
           width: '297mm',
           height: '210mm',
           margin: '0 auto',
