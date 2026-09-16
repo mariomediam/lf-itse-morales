@@ -201,8 +201,8 @@ export default function ModificarLicenciaPage() {
         setTipoLicenciaId(String(lf.tipo_licencia_id))
         setResolucionNumero(lf.resolucion_numero ?? '')
         setNivelRiesgoId(String(lf.nivel_riesgo_id))
-        setHoraDesde(String(lf.hora_desde))
-        setHoraHasta(String(lf.hora_hasta))
+        setHoraDesde(lf.hora_desde != null ? String(lf.hora_desde) : '')
+        setHoraHasta(lf.hora_hasta != null ? String(lf.hora_hasta) : '')
         setNumeroReciboPago(lf.numero_recibo_pago ?? '')
 
         // Establecimiento
@@ -268,8 +268,10 @@ export default function ModificarLicenciaPage() {
     if (!tipoLicenciaId)   { toast.error('Seleccione el tipo de licencia');            return }
     if (!resolucionNumero) { toast.error('Ingrese el número de resolución');           return }
     if (!nivelRiesgoId)    { toast.error('Seleccione el nivel de riesgo');             return }
-    if (!horaDesde)        { toast.error('Ingrese la hora de inicio del horario');     return }
-    if (!horaHasta)        { toast.error('Ingrese la hora de cierre del horario');     return }
+    if (!imprimeOrdenanzaHorario) {
+      if (horaDesde === '' || horaDesde == null) { toast.error('Ingrese la hora de inicio del horario'); return }
+      if (horaHasta === '' || horaHasta == null) { toast.error('Ingrese la hora de cierre del horario'); return }
+    }
     if (!titular)          { toast.error('Seleccione el titular de la licencia');      return }
     if (!representante)    { toast.error('Seleccione el representante legal');         return }
     if (!nombreComercial)  { toast.error('Ingrese el nombre comercial');               return }
@@ -303,8 +305,8 @@ export default function ModificarLicenciaPage() {
       nivel_riesgo_id:          Number(nivelRiesgoId),
       actividad:                actividad.trim(),
       direccion:                direccion.trim(),
-      hora_desde:               Number(horaDesde),
-      hora_hasta:               Number(horaHasta),
+      hora_desde:               horaDesde === '' || horaDesde == null ? null : Number(horaDesde),
+      hora_hasta:               horaHasta === '' || horaHasta == null ? null : Number(horaHasta),
       resolucion_numero:        resolucionNumero.trim(),
       zonificacion_id:          Number(zonificacionId),
       area:                     area,
@@ -531,7 +533,7 @@ export default function ModificarLicenciaPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                      Hora desde <span className="text-danger">*</span>
+                      Hora desde {!imprimeOrdenanzaHorario && <span className="text-danger">*</span>}
                     </label>
                     <input
                       type="number"
@@ -539,13 +541,13 @@ export default function ModificarLicenciaPage() {
                       max="23"
                       value={horaDesde}
                       onChange={(e) => setHoraDesde(e.target.value)}
-                      placeholder="0"
+                      placeholder={imprimeOrdenanzaHorario ? 'Opcional' : '0'}
                       className={inputClass}
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                      Hora hasta <span className="text-danger">*</span>
+                      Hora hasta {!imprimeOrdenanzaHorario && <span className="text-danger">*</span>}
                     </label>
                     <input
                       type="number"
@@ -553,7 +555,7 @@ export default function ModificarLicenciaPage() {
                       max="23"
                       value={horaHasta}
                       onChange={(e) => setHoraHasta(e.target.value)}
-                      placeholder="23"
+                      placeholder={imprimeOrdenanzaHorario ? 'Opcional' : '23'}
                       className={inputClass}
                     />
                   </div>

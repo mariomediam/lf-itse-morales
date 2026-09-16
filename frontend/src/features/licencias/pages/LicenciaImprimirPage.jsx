@@ -20,7 +20,8 @@ const TEXTO_ORDENANZA =
 const formatFechaCorta = (fechaStr) => {
   if (!fechaStr) return '-'
   const [y, m, d] = String(fechaStr).slice(0, 10).split('-')
-  return `${parseInt(d)}/${parseInt(m)}/${y}`
+  if (!y || !m || !d) return '-'
+  return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`
 }
 
 const getAnio2Digitos = (fechaStr) => {
@@ -416,10 +417,16 @@ export default function LicenciaImprimirPage() {
                     Área Autorizada:
                   </span>
                   <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> *****{licencia.area != null ? Number(licencia.area).toFixed(2) : '-'} m²*****</span>
-                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}><b>Horario:</b>&nbsp;
+                  {/* si licencia.hora_desde es nulo o vacio, no mostrar el horario */}
+                  {licencia.hora_desde != null && licencia.hora_hasta != null && (
+                    <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}><b>Horario:</b>&nbsp;
+                      {licencia.hora_desde} - {licencia.hora_hasta} horas</span>
+                  )}
+
+                  {/* <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}><b>Horario:</b>&nbsp;
                     {licencia.hora_desde != null && licencia.hora_hasta != null
                       ? `${licencia.hora_desde} - ${licencia.hora_hasta} horas`
-                      : '-'}</span>
+                      : '-'}</span> */}
                 </div>
 
                 {/* <Fila label="TIPO ESTABLECIMIENTO">{mayus(licencia.tipo_establecimiento)}</Fila> */}
@@ -534,7 +541,7 @@ export default function LicenciaImprimirPage() {
                   <span style={{ fontSize: '10px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter }}>
                     ESTE DOCUMENTO NO DEBE CONTENER BORRONES NI ENMENDADURAS PARA SU VALIDEZ
                   </span>
-                  
+
                   <span style={{ fontSize: '10px', fontStyle: 'italic', fontWeight: 'bold', color: verdeFooter, textAlign: 'right' }}>
                     ESTE DOCUMENTO SE DEBERA COLOCAR EN UN LUGAR VISIBLE
                   </span>

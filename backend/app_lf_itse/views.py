@@ -3670,7 +3670,11 @@ class VerificarLicenciaPublicaView(APIView):
             'fecha_emision': licencia.fecha_emision.isoformat(),
             'vigencia': vigencia,
             'nivel_riesgo': licencia.nivel_riesgo.nombre if licencia.nivel_riesgo else '',
-            'horario': f'{licencia.hora_desde}:00 - {licencia.hora_hasta}:00',
+            'horario': (
+                f'{licencia.hora_desde}:00 - {licencia.hora_hasta}:00'
+                if licencia.hora_desde is not None and licencia.hora_hasta is not None
+                else '-'
+            ),
             'titular': titular_nombre,
             'nombre_comercial': licencia.nombre_comercial,
             'actividad_economica': licencia.actividad,
@@ -3838,7 +3842,11 @@ class BuscarLicenciaPublicaView(APIView):
                 'fecha_emision': licencia.fecha_emision.isoformat(),
                 'vigencia': vigencia,
                 'nivel_riesgo': licencia.nivel_riesgo.nombre if licencia.nivel_riesgo else '',
-                'horario': f'{licencia.hora_desde}:00 - {licencia.hora_hasta}:00',
+                'horario': (
+                    f'{licencia.hora_desde}:00 - {licencia.hora_hasta}:00'
+                    if licencia.hora_desde is not None and licencia.hora_hasta is not None
+                    else '-'
+                ),
                 'titular': titular_nombre,
                 'nombre_comercial': licencia.nombre_comercial,
                 'actividad_economica': licencia.actividad,

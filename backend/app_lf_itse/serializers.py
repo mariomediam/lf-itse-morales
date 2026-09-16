@@ -536,6 +536,20 @@ class ItseUpdateSerializer(ItseCreateSerializer):
     """
 
 
+def _validar_horario_licencia(data):
+    """Require hour range unless the ordinance schedule will be printed."""
+    if data.get('imprime_ordenanza_horario'):
+        return
+    if data.get('hora_desde') is None:
+        raise serializers.ValidationError(
+            {'hora_desde': 'Este campo es obligatorio cuando no se imprime la ordenanza de horario.'}
+        )
+    if data.get('hora_hasta') is None:
+        raise serializers.ValidationError(
+            {'hora_hasta': 'Este campo es obligatorio cuando no se imprime la ordenanza de horario.'}
+        )
+
+
 class LicenciaFuncionamientoCreateSerializer(serializers.Serializer):
     """
     Valida los datos de entrada para crear una licencia de funcionamiento.
@@ -547,6 +561,10 @@ class LicenciaFuncionamientoCreateSerializer(serializers.Serializer):
       almacenan como ``None``.
     - Si ``es_vigencia_indeterminada`` es ``False``, ambas fechas son
       obligatorias y deben tener valores válidos.
+    - Si ``imprime_ordenanza_horario`` es ``True``, ``hora_desde`` y
+      ``hora_hasta`` son opcionales.
+    - Si ``imprime_ordenanza_horario`` es ``False``, ambas horas son
+      obligatorias.
 
     Campos de auditoría (``usuario``, ``fecha_digitacion``) se asignan
     automáticamente en la capa de servicio.
@@ -566,8 +584,8 @@ class LicenciaFuncionamientoCreateSerializer(serializers.Serializer):
     nivel_riesgo_id          = serializers.IntegerField()
     actividad                = serializers.CharField(max_length=50)
     direccion                = serializers.CharField(max_length=250)
-    hora_desde               = serializers.IntegerField()
-    hora_hasta               = serializers.IntegerField()
+    hora_desde               = serializers.IntegerField(required=False, allow_null=True)
+    hora_hasta               = serializers.IntegerField(required=False, allow_null=True)
     resolucion_numero        = serializers.CharField(max_length=50)
     zonificacion_id          = serializers.IntegerField()
     area                     = serializers.DecimalField(max_digits=18, decimal_places=2)
@@ -608,6 +626,7 @@ class LicenciaFuncionamientoCreateSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     {'fecha_fin_vigencia': 'Este campo es obligatorio cuando la vigencia no es indeterminada.'}
                 )
+        _validar_horario_licencia(data)
         return data
 
 
@@ -625,6 +644,10 @@ class LicenciaFuncionamientoUpdateSerializer(serializers.Serializer):
     - Si ``es_vigencia_indeterminada`` es ``True``, las fechas de vigencia se
       anulan en la capa de servicio.
     - Si ``es_vigencia_indeterminada`` es ``False``, ambas fechas son
+      obligatorias.
+    - Si ``imprime_ordenanza_horario`` es ``True``, ``hora_desde`` y
+      ``hora_hasta`` son opcionales.
+    - Si ``imprime_ordenanza_horario`` es ``False``, ambas horas son
       obligatorias.
 
     Campos de auditoría (``usuario``, ``fecha_digitacion``) no se modifican.
@@ -644,8 +667,8 @@ class LicenciaFuncionamientoUpdateSerializer(serializers.Serializer):
     nivel_riesgo_id          = serializers.IntegerField()
     actividad                = serializers.CharField(max_length=50)
     direccion                = serializers.CharField(max_length=250)
-    hora_desde               = serializers.IntegerField()
-    hora_hasta               = serializers.IntegerField()
+    hora_desde               = serializers.IntegerField(required=False, allow_null=True)
+    hora_hasta               = serializers.IntegerField(required=False, allow_null=True)
     resolucion_numero        = serializers.CharField(max_length=50)
     zonificacion_id          = serializers.IntegerField()
     area                     = serializers.DecimalField(max_digits=18, decimal_places=2)
@@ -686,6 +709,7 @@ class LicenciaFuncionamientoUpdateSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     {'fecha_fin_vigencia': 'Este campo es obligatorio cuando la vigencia no es indeterminada.'}
                 )
+        _validar_horario_licencia(data)
         return data
 
 
