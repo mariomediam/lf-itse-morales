@@ -475,14 +475,14 @@ export default function LicenciaImprimirPage() {
                       {TEXTO_ORDENANZA}
                     </p>
                   )}
-                  {/* {qrUrl && (
+                  {qrUrl && (
                     <div style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                       <QRCode value={qrUrl} size={72} level="M" />
                       <p style={{ fontSize: '7px', margin: '3px 0 0 0', textAlign: 'center', color: '#555' }}>
                         Verificar documento
                       </p>
                     </div>
-                  )} */}
+                  )}
                 </div>
 
 
