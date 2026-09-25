@@ -336,14 +336,14 @@ export default function LicenciaImprimirPage() {
                 </p>
 
                 {/* Nombre Comercial */}
-                <p style={{ textAlign: 'center', fontSize: '12px', margin: '6px 0 1px', letterSpacing: '1.5px' }}>
+                <p style={{ textAlign: 'center', fontSize: '12px', margin: '0px 0 1px', letterSpacing: '1.5px' }}>
                   NOMBRE COMERCIAL
                 </p>
                 <p style={{
                   textAlign: 'center',
                   fontWeight: 'bold',
                   fontSize: '30px',
-                  margin: '8px 0 6px',
+                  margin: '4px 0 6px',
                   lineHeight: '1.2',
                 }}>
                   &ldquo;{mayus(licencia.nombre_comercial)}&rdquo;
@@ -374,8 +374,8 @@ export default function LicenciaImprimirPage() {
                   }}>
                     RUC:
                   </span>
-                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}>{licencia.titular_ruc || '-'}</span>
-                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}>{licencia.resolucion_numero || '-'}</span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45'}}>{licencia.titular_ruc || '-'}</span>
+                  <span style={{ fontSize: '17px', lineHeight: '1.45', marginLeft: '160px' }}>{licencia.resolucion_numero || '-'}</span>
                 </div>
 
 
@@ -388,22 +388,7 @@ export default function LicenciaImprimirPage() {
                 <Fila label="DOMICILIO FISCAL">{mayus(titularDireccion)}</Fila>
                 <Fila label="ACTIVIDAD">{mayus(licencia.actividad)}</Fila>
                 <Fila label="GIRO DEL NEGOCIO">{giroTexto}</Fila>
-
-                {/* Área + Horario (misma fila) */}
-                {/* <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px', fontSize: '12px' }}>
-                  <span style={{ width: '168px', textAlign: 'right', marginRight: '6px', fontWeight: 'bold', flexShrink: 0 }}>
-                    Área Autorizada:
-                  </span>
-                  <span style={{ flex: 1 }}>
-                    *****{licencia.area != null ? Number(licencia.area).toFixed(2) : '-'} m²*****
-                  </span>
-                  <span style={{ marginLeft: '24px' }}>
-                    <b>Horario:</b>&nbsp;
-                    {licencia.hora_desde != null && licencia.hora_hasta != null
-                      ? `${licencia.hora_desde} - ${licencia.hora_hasta} horas`
-                      : '-'}
-                  </span>
-                </div> */}
+                
                 <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
                   <span style={{
                     fontWeight: 'bold',
@@ -444,37 +429,14 @@ export default function LicenciaImprimirPage() {
                     TIPO ESTABLECIMIENTO:
                   </span>
                   <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> {mayus(licencia.tipo_establecimiento)}</span>
-
-                </div>
-
-                {/* Inscrita + Fecha (misma fila) */}
-                {/* <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px', fontSize: '12px' }}>
-                  <span style={{ width: '168px', textAlign: 'right', marginRight: '6px', fontWeight: 'bold', flexShrink: 0 }}>
-                    Inscrita en la Base de Datos con Código:
-                  </span>
-                  <span style={{ flex: 1 }}>
-                    <b>{licencia.codigo_inscripcion || '-'}</b>
-                  </span>
-                  <span style={{ marginLeft: '32px' }}>
+                  {/* Same column as Horario: right block of Área Autorizada is (100% - 168px - 12px) / 2 */}
+                  <span style={{
+                    fontSize: '17px',
+                    lineHeight: '1.45',
+                    flex: '0 0 calc((100% - 180px) / 2)',
+                  }}>
                     <b>Fecha:</b>&nbsp;{formatFechaCorta(licencia.fecha_emision)}
                   </span>
-                </div> */}
-
-
-                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3.5px' }}>
-                  <span style={{
-                    fontWeight: 'bold',
-                    fontSize: '17px',
-                    flexShrink: 0,
-                    width: '330px',
-                    textAlign: 'right',
-                    marginRight: '12px',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    Inscrita en la Base de Datos con Código:
-                  </span>
-                  <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}> {licencia.codigo_inscripcion || '-'}<b style={{ marginLeft: '195px' }}>Fecha:</b>&nbsp;{formatFechaCorta(licencia.fecha_emision)}</span>
-
                 </div>
 
                 {/* Vigencia */}
@@ -513,14 +475,14 @@ export default function LicenciaImprimirPage() {
                       {TEXTO_ORDENANZA}
                     </p>
                   )}
-                  {qrUrl && (
+                  {/* {qrUrl && (
                     <div style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                       <QRCode value={qrUrl} size={72} level="M" />
                       <p style={{ fontSize: '7px', margin: '3px 0 0 0', textAlign: 'center', color: '#555' }}>
                         Verificar documento
                       </p>
                     </div>
-                  )}
+                  )} */}
                 </div>
 
 
