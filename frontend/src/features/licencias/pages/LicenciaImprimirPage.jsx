@@ -16,6 +16,8 @@ const TEXTO_ORDENANZA =
   'hasta la 1:00 am, para los locales  comerciales  como peñas,discotecas, salones de baile , karaokes, ' +
   'video pubs, night clubs y cualquier otro lugar similar  que expendan bebidas alcohólicas para su consumo.'
 
+const NOTA_PIE_DE_PAGINA = "El presente, pierde su valor por: Cambio de Nombre o Razón Social, Transferencia o Traslado, Cambio de Giro, Fallecimiento del propietario o cuando determina la Autoridad."
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const formatFechaCorta = (fechaStr) => {
@@ -465,7 +467,7 @@ export default function LicenciaImprimirPage() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {licencia.imprime_ordenanza_horario && (
+                  {licencia.imprime_ordenanza_horario ? (
                     <p style={{
                       width: '55%',
                       fontSize: '12px',
@@ -475,15 +477,25 @@ export default function LicenciaImprimirPage() {
                     }}>
                       {TEXTO_ORDENANZA}
                     </p>
+                  ) : (
+                    <p style={{
+                      width: '55%',
+                      fontSize: '12px',
+                      lineHeight: '1.45',
+                      margin: '2px 0 4px 12px',
+                      textAlign: 'justify',
+                    }}>
+                      {NOTA_PIE_DE_PAGINA}
+                    </p>
                   )}
-                  {qrUrl && (
+                  {/* {qrUrl && (
                     <div style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                       <QRCode value={qrUrl} size={72} level="M" />
                       <p style={{ fontSize: '7px', margin: '3px 0 0 0', textAlign: 'center', color: '#555' }}>
                         Verificar documento
                       </p>
                     </div>
-                  )}
+                  )} */}
                 </div>
 
 
