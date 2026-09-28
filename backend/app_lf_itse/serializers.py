@@ -536,8 +536,18 @@ class ItseUpdateSerializer(ItseCreateSerializer):
     """
 
 
+def _campo_hora_atencion():
+    """Time of day (HH:MM). A new field instance is required for each attribute."""
+    return serializers.TimeField(
+        required=False,
+        allow_null=True,
+        format='%H:%M',
+        input_formats=['%H:%M', '%H:%M:%S'],
+    )
+
+
 def _validar_horario_licencia(data):
-    """Require hour range unless the ordinance schedule will be printed."""
+    """Require an attendance time range unless the ordinance schedule will be printed."""
     if data.get('imprime_ordenanza_horario'):
         return
     if data.get('hora_desde') is None:
@@ -584,8 +594,8 @@ class LicenciaFuncionamientoCreateSerializer(serializers.Serializer):
     nivel_riesgo_id          = serializers.IntegerField()
     actividad                = serializers.CharField(max_length=50)
     direccion                = serializers.CharField(max_length=250)
-    hora_desde               = serializers.IntegerField(required=False, allow_null=True)
-    hora_hasta               = serializers.IntegerField(required=False, allow_null=True)
+    hora_desde               = _campo_hora_atencion()
+    hora_hasta               = _campo_hora_atencion()
     resolucion_numero        = serializers.CharField(max_length=50)
     zonificacion_id          = serializers.IntegerField()
     area                     = serializers.DecimalField(max_digits=18, decimal_places=2)
@@ -667,8 +677,8 @@ class LicenciaFuncionamientoUpdateSerializer(serializers.Serializer):
     nivel_riesgo_id          = serializers.IntegerField()
     actividad                = serializers.CharField(max_length=50)
     direccion                = serializers.CharField(max_length=250)
-    hora_desde               = serializers.IntegerField(required=False, allow_null=True)
-    hora_hasta               = serializers.IntegerField(required=False, allow_null=True)
+    hora_desde               = _campo_hora_atencion()
+    hora_hasta               = _campo_hora_atencion()
     resolucion_numero        = serializers.CharField(max_length=50)
     zonificacion_id          = serializers.IntegerField()
     area                     = serializers.DecimalField(max_digits=18, decimal_places=2)

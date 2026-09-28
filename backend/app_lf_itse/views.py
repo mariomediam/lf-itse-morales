@@ -1,7 +1,7 @@
 import logging
 
 import mimetypes
-from datetime import date
+from datetime import date, time
 
 from django.conf import settings as django_settings
 from django.core.files.storage import default_storage
@@ -3610,6 +3610,22 @@ class ConfigPublicaView(APIView):
         })
 
 
+def _texto_horario(hora_desde, hora_hasta):
+    """Format an attendance range as HH:MM - HH:MM."""
+    if hora_desde is None or hora_hasta is None:
+        return '-'
+
+    def _fmt(valor):
+        if isinstance(valor, time):
+            return valor.strftime('%H:%M')
+        texto = str(valor).strip()
+        if texto.isdigit() and len(texto) <= 2:
+            return f'{int(texto):02d}:00'
+        return texto[:5]
+
+    return f'{_fmt(hora_desde)} - {_fmt(hora_hasta)}'
+
+
 class VerificarLicenciaPublicaView(APIView):
     """
     GET /api/lf-itse/verificar/licencia/<uuid>/
@@ -3670,11 +3686,7 @@ class VerificarLicenciaPublicaView(APIView):
             'fecha_emision': licencia.fecha_emision.isoformat(),
             'vigencia': vigencia,
             'nivel_riesgo': licencia.nivel_riesgo.nombre if licencia.nivel_riesgo else '',
-            'horario': (
-                f'{licencia.hora_desde}:00 - {licencia.hora_hasta}:00'
-                if licencia.hora_desde is not None and licencia.hora_hasta is not None
-                else '-'
-            ),
+            'horario': _texto_horario(licencia.hora_desde, licencia.hora_hasta),
             'titular': titular_nombre,
             'nombre_comercial': licencia.nombre_comercial,
             'actividad_economica': licencia.actividad,
@@ -3842,11 +3854,7 @@ class BuscarLicenciaPublicaView(APIView):
                 'fecha_emision': licencia.fecha_emision.isoformat(),
                 'vigencia': vigencia,
                 'nivel_riesgo': licencia.nivel_riesgo.nombre if licencia.nivel_riesgo else '',
-                'horario': (
-                    f'{licencia.hora_desde}:00 - {licencia.hora_hasta}:00'
-                    if licencia.hora_desde is not None and licencia.hora_hasta is not None
-                    else '-'
-                ),
+                'horario': _texto_horario(licencia.hora_desde, licencia.hora_hasta),
                 'titular': titular_nombre,
                 'nombre_comercial': licencia.nombre_comercial,
                 'actividad_economica': licencia.actividad,

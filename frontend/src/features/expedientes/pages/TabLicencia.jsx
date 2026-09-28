@@ -4,7 +4,7 @@ import { licenciasApi } from '@api/licenciasApi'
 import { personasApi } from '@api/personasApi'
 import { expedientesApi } from '@api/expedientesApi'
 import { usuariosApi } from '@api/usuariosApi'
-import { formatFecha, formatFechaHora, formatSize } from '@utils/formatters'
+import { formatFecha, formatFechaHora, formatHora, formatSize } from '@utils/formatters'
 
 const formatNumeroLicencia = (numero, fechaEmision) => {
   const anio = new Date(fechaEmision).getFullYear()
@@ -19,8 +19,11 @@ const formatVigencia = (licencia) => {
 }
 
 const formatHorario = (desde, hasta) => {
-  if (desde == null && hasta == null) return '-'
-  return `${desde} - ${hasta} horas`
+  const inicio = formatHora(desde)
+  const fin = formatHora(hasta)
+  if (!inicio && !fin) return '-'
+  if (!inicio || !fin) return inicio || fin
+  return `${inicio} - ${fin}`
 }
 
 // ── Iconos ────────────────────────────────────────────────────────────────────

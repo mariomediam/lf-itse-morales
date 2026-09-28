@@ -4,6 +4,7 @@ import { QRCode } from 'react-qr-code'
 import { licenciasApi } from '@api/licenciasApi'
 import { personasApi } from '@api/personasApi'
 import { configPublicaApi } from '@api/configPublicaApi'
+import { formatHora } from '@utils/formatters'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -405,7 +406,7 @@ export default function LicenciaImprimirPage() {
                   {/* si licencia.hora_desde es nulo o vacio, no mostrar el horario */}
                   {licencia.hora_desde != null && licencia.hora_hasta != null && (
                     <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}><b>Horario:</b>&nbsp;
-                      {licencia.hora_desde} - {licencia.hora_hasta} horas</span>
+                      {formatHora(licencia.hora_desde)} - {formatHora(licencia.hora_hasta)}</span>
                   )}
 
                   {/* <span style={{ fontSize: '17px', lineHeight: '1.45', flex: 1 }}><b>Horario:</b>&nbsp;

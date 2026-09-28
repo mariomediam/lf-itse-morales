@@ -6,6 +6,7 @@ lo que facilita reutilización, pruebas unitarias y futuros cambios.
 """
 
 import logging
+from datetime import datetime, time
 
 from auditlog.context import set_actor
 from django.core.files.storage import default_storage
@@ -24,6 +25,33 @@ from ..models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _hora_a_texto(valor):
+    """Serialize an attendance time as HH:MM. Legacy integer hours become HH:00."""
+    if valor is None:
+        return None
+    if isinstance(valor, datetime):
+        return valor.strftime('%H:%M')
+    if isinstance(valor, time):
+        return valor.strftime('%H:%M')
+    if isinstance(valor, int) and 0 <= valor <= 23:
+        return f'{valor:02d}:00'
+    texto = str(valor).strip()
+    if texto.isdigit() and len(texto) <= 2:
+        hora = int(texto)
+        if 0 <= hora <= 23:
+            return f'{hora:02d}:00'
+    return texto[:5] if texto else None
+
+
+def _normalizar_horario(filas):
+    for fila in filas:
+        if 'hora_desde' in fila:
+            fila['hora_desde'] = _hora_a_texto(fila['hora_desde'])
+        if 'hora_hasta' in fila:
+            fila['hora_hasta'] = _hora_a_texto(fila['hora_hasta'])
+    return filas
 
 
 class LicenciaDuplicadaError(Exception):
@@ -257,7 +285,7 @@ def buscar_licencias(filtro: str, valor: str) -> list[dict]:
     with connection.cursor() as cursor:
         cursor.execute(sql, [valor_param])
         columnas = [col[0] for col in cursor.description]
-        return [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+        return _normalizar_horario([dict(zip(columnas, fila)) for fila in cursor.fetchall()])
 
 
 # ── Estados de licencia de funcionamiento ──────────────────────────────────────
@@ -1160,7 +1188,7 @@ def consultar_licencias(filtros: dict) -> list[dict]:
     with connection.cursor() as cursor:
         cursor.execute(sql, params)
         columnas = [col[0] for col in cursor.description]
-        return [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+        return _normalizar_horario([dict(zip(columnas, fila)) for fila in cursor.fetchall()])
 
 
 # ── Registro de inactivación (historial en licencias_funcionamiento_estados) ────
@@ -1482,4 +1510,4 @@ def reporte_licencias(filtros: dict) -> list[dict]:
         columnas  = [col[0] for col in cursor.description]
         resultados = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
 
-    return resultados
+    return _normalizar_horario(resultados)

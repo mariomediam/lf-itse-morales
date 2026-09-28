@@ -9,6 +9,7 @@ import { dashboardApi } from '@api/dashboardApi'
 import { licenciasApi } from '@api/licenciasApi'
 import { personasApi } from '@api/personasApi'
 import useLicenciasStore from '@store/licenciasStore'
+import { formatHora } from '@utils/formatters'
 
 // ── Clases reutilizables ───────────────────────────────────────────────────────
 
@@ -201,8 +202,8 @@ export default function ModificarLicenciaPage() {
         setTipoLicenciaId(String(lf.tipo_licencia_id))
         setResolucionNumero(lf.resolucion_numero ?? '')
         setNivelRiesgoId(String(lf.nivel_riesgo_id))
-        setHoraDesde(lf.hora_desde != null ? String(lf.hora_desde) : '')
-        setHoraHasta(lf.hora_hasta != null ? String(lf.hora_hasta) : '')
+        setHoraDesde(formatHora(lf.hora_desde))
+        setHoraHasta(formatHora(lf.hora_hasta))
         setNumeroReciboPago(lf.numero_recibo_pago ?? '')
 
         // Establecimiento
@@ -305,8 +306,8 @@ export default function ModificarLicenciaPage() {
       nivel_riesgo_id:          Number(nivelRiesgoId),
       actividad:                actividad.trim(),
       direccion:                direccion.trim(),
-      hora_desde:               horaDesde === '' || horaDesde == null ? null : Number(horaDesde),
-      hora_hasta:               horaHasta === '' || horaHasta == null ? null : Number(horaHasta),
+      hora_desde:               horaDesde || null,
+      hora_hasta:               horaHasta || null,
       resolucion_numero:        resolucionNumero.trim(),
       zonificacion_id:          Number(zonificacionId),
       area:                     area,
@@ -536,12 +537,10 @@ export default function ModificarLicenciaPage() {
                       Hora desde {!imprimeOrdenanzaHorario && <span className="text-danger">*</span>}
                     </label>
                     <input
-                      type="number"
-                      min="0"
-                      max="23"
+                      type="time"
+                      step="60"
                       value={horaDesde}
                       onChange={(e) => setHoraDesde(e.target.value)}
-                      placeholder={imprimeOrdenanzaHorario ? 'Opcional' : '0'}
                       className={inputClass}
                     />
                   </div>
@@ -550,12 +549,10 @@ export default function ModificarLicenciaPage() {
                       Hora hasta {!imprimeOrdenanzaHorario && <span className="text-danger">*</span>}
                     </label>
                     <input
-                      type="number"
-                      min="0"
-                      max="23"
+                      type="time"
+                      step="60"
                       value={horaHasta}
                       onChange={(e) => setHoraHasta(e.target.value)}
-                      placeholder={imprimeOrdenanzaHorario ? 'Opcional' : '23'}
                       className={inputClass}
                     />
                   </div>

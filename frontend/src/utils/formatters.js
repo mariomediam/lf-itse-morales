@@ -18,6 +18,16 @@ export const formatFechaHora = (fechaStr) => {
   return `${dia}/${mes}/${d.getFullYear()} ${hora}:${min}`
 }
 
+export const formatHora = (valor) => {
+  if (valor == null || valor === '') return ''
+  const texto = String(valor).trim()
+  if (/^\d{1,2}$/.test(texto)) {
+    const hora = Number(texto)
+    if (hora >= 0 && hora <= 23) return `${String(hora).padStart(2, '0')}:00`
+  }
+  return texto.slice(0, 5)
+}
+
 export const formatSize = (bytes) => {
   if (!bytes) return ''
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
