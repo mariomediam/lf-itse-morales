@@ -11,10 +11,7 @@ import { formatHora } from '@utils/formatters'
 const CODIGO_DNI = '01'
 
 const TEXTO_ORDENANZA =
-  'Ordenanza Nº 003-MDM-2011: Art Segundo- Establecer  de Jueves a Sabado y Vìsperas a un feriado ' +
-  'como horario tope  de funcionamiento hasta las  5:00 am, y Domingo a  Miercoles como horario tope ' +
-  'hasta la 1:00 am, para los locales  comerciales  como peñas,discotecas, salones de baile , karaokes, ' +
-  'video pubs, night clubs y cualquier otro lugar similar  que expendan bebidas alcohólicas para su consumo.'
+  'Ordenanza N° 004-2026-MDM-: Art Cuarto- Establecer de Jueves a Sabado y Visperas a un feriado como horario tope de funcionamiento hasta las 5:00 am, y Domingo a Miercoles como horario tope hasta la 1:00 am, para los locales comerciales como peñas, discotecas, salones de baile, karaokes, video pubs, night clubs y cualquier otro lugar similar que expendan bebidas alcohólicas para su consumo.'
 
 const NOTA_PIE_DE_PAGINA = "El presente, pierde su valor por: Cambio de Nombre o Razón Social, Transferencia o Traslado, Cambio de Giro, Fallecimiento del propietario o cuando determina la Autoridad."
 
